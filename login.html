@@ -59,7 +59,7 @@
 <body>
     <div class="card">
         <h2>로그인</h2>
-        <form id="loginForm" action="http://localhost:8080/test" method="post">
+        <form id="loginForm" action="http://localhost:8080/test" method="get">
             <div class="form-group">
                 <label for="username">사용자 이름:</label>
                 <input type="text" id="username" name="username" placeholder="Username">
@@ -68,49 +68,10 @@
                 <label for="password">비밀번호:</label>
                 <input type="password" id="password" name="password" placeholder="Password">
             </div>
-            <button type="submit">로그인</button>
+            <button type="submit" href="http://localhost:8080/test">로그인</button>
         </form>
         <p style="text-align: center; margin-top: 16px;">
             아직 회원이 아니시라구요?
             <button onclick="location.href='register.html'">회원가입 하기</button>
         </p>
     </div>
-
-    <div id="result"></div>
-
-    <script>
-        document.getElementById("loginForm").addEventListener("submit", function(event) {
-        event.preventDefault(); // 폼 기본 동작 방지
-        
-        const formData = new FormData(this);
-        const username = formData.get("username");
-        const password = formData.get("password");
-        
-        const headers = new Headers();
-        headers.append("Authorization", "Basic " + btoa(username + ":" + password));
-        
-        fetch("http://localhost:8080/test", {
-            method: "POST",
-            headers: headers
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('로그인 실패');
-            }
-            return response.json();
-        })
-        .then(data => {
-            window.alert("로그인 성공!");
-            // 로그인 성공 후 리다이렉트 등의 작업을 수행할 수 있음
-            //window.location.href = "/dashboard.html";
-        })
-        .catch(error => {
-            console.error('로그인 에러:', error);
-            //document.getElementById("result").innerText = "로그인 실패!";
-            window.alert("로그인 실패!");
-        });
-        });
-    </script>
-</body>
-
-</html>
