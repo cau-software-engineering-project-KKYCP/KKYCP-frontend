@@ -60,7 +60,8 @@
     <div class="card">
         <h2>로그인</h2>
         <form id="loginForm" action="http://localhost:8080/test" method="get">
-            <div class="form-group">
+        <!-- 로그인 인터페이스는 get method의 구현되어 있으므로 생략했습니다.
+                <div class="form-group">
                 <label for="username">사용자 이름:</label>
                 <input type="text" id="username" name="username" placeholder="Username">
             </div>
@@ -68,10 +69,16 @@
                 <label for="password">비밀번호:</label>
                 <input type="password" id="password" name="password" placeholder="Password">
             </div>
-            <button type="submit" href="http://localhost:8080/test">로그인</button>
+        -->
+            <button type="submit">로그인</button>
         </form>
+
         <p style="text-align: center; margin-top: 16px;">
             아직 회원이 아니시라구요?
             <button onclick="location.href='register.html'">회원가입 하기</button>
         </p>
     </div>
+
+</body>
+
+</html>
