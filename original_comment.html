@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comment Section</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+    }
+    label {
+      font-weight: bold;
+    }
+    textarea {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 8px 16px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+    }
+    .comment {
+      margin-bottom: 10px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="usernameDisplay"></div>
+
+    <form id="commentForm">
+      <label for="comment">Comment:</label><br>
+      <textarea id="comment" name="comment" rows="4" cols="50"></textarea><br>
+      <button type="submit">Submit</button>
+    </form>
+
+    <div id="commentList"></div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const username = "User123";
+      const usernameDisplay = document.getElementById("usernameDisplay");
+      usernameDisplay.textContent = `Username: ${username}`;
+
+      const commentForm = document.getElementById("commentForm");
+      const commentList = document.getElementById("commentList");
+
+      commentForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+
+        const commentInput = document.getElementById("comment");
+        const commentText = commentInput.value.trim();
+
+        if (commentText !== "") {
+          const currentTime = new Date().toLocaleString();
+
+          const commentElement = document.createElement("div");
+          commentElement.classList.add("comment");
+          commentElement.innerHTML = `
+            <div><strong>${username}</strong> - ${currentTime}</div>
+            <div>${commentText}</div>
+          `;
+
+          commentList.appendChild(commentElement);
+
+          commentInput.value = "";
+        } else {
+          alert("Please enter a comment.");
+        }
+      });
+    });
+  </script>
+</body>
+</html>
