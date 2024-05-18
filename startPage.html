@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KKYCP - Issue Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f8;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 1rem 0;
+            text-align: center;
+        }
+
+        header h1 {
+            color: white;
+        }
+
+        .container {
+            width: 80%;
+            margin: 2rem auto;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #007bff;
+        }
+
+        .project-list {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .project-list th,
+        .project-list td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        .project-list th {
+            background-color: #007bff;
+            color: white;
+            text-align: left;
+        }
+
+        .project-list tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .project-list tr:hover {
+            background-color: #ddd;
+        }
+
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.4);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+
+        .modal-header,
+        .modal-body,
+        .modal-footer {
+            padding: 10px;
+        }
+
+        .modal-header {
+            background-color: #007bff;
+            color: white;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .modal-footer .btn {
+            margin-left: 10px;
+        }
+
+        .modal-body input,
+        .modal-body textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .create-btn {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>KKYCP - Issue Manager</h1>
+    </header>
+    <div class="container">
+        <h1>Project List</h1>
+        <div class="create-btn">
+            <button class="btn" onclick="openCreateProjectModal()">Create New Project</button>
+        </div>
+        <table class="project-list">
+            <thead>
+                <tr>
+                    <th>Project Name</th>
+                    <th>Description</th>
+                    <th>Created Date</th>
+                    <th>Created By</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="project-table-body">
+                <!-- Project rows will be inserted here dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Create Project Modal -->
+    <div id="createProjectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create Project</h2>
+            </div>
+            <div class="modal-body">
+                <label for="createProjectName">Project Name</label>
+                <input type="text" id="createProjectName">
+                <label for="createProjectDescription">Description</label>
+                <textarea id="createProjectDescription"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="saveCreateProject()">Create</button>
+                <button class="btn" onclick="closeCreateProjectModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Project Modal -->
+    <div id="editProjectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Project</h2>
+            </div>
+            <div class="modal-body">
+                <label for="editProjectName">Project Name</label>
+                <input type="text" id="editProjectName">
+                <label for="editProjectDescription">Description</label>
+                <textarea id="editProjectDescription"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="saveEditProject()">Save</button>
+                <button class="btn" onclick="closeEditProjectModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 샘플 데이터 (예시). 실제 프로젝트 데이터는 백엔드에서 가져옵니다.
+        const sampleProjects = [
+            { name: 'Project 1', description: 'Description for Project 1', createdDate: '2024-01-01', createdBy: 'Admin 1' },
+            { name: 'Project 2', description: 'Description for Project 2', createdDate: '2024-02-01', createdBy: 'Admin 2' },
+            { name: 'Project 3', description: 'Description for Project 3', createdDate: '2024-03-01', createdBy: 'Admin 3' }
+        ];
+
+        let currentEditProjectIndex = null;
+        const loggedInUser = 'currentUser'; // 현재 로그인한 사용자의 닉네임을 나타내는 변수
+
+        // 프로젝트 리스트를 화면에 표시하는 함수
+        function displayProjects(projects) {
+            const projectTableBody = document.getElementById('project-table-body');
+            projectTableBody.innerHTML = '';
+
+            projects.forEach((project, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${project.name}</td>
+                    <td>${project.description}</td>
+                    <td>${project.createdDate}</td>
+                    <td>${project.createdBy}</td>
+                    <td>
+                        <button class="btn" onclick="viewProject(${index})">View</button>
+                        <button class="btn" onclick="editProject(${index})">Edit</button>
+                        <button class="btn" onclick="deleteProject(${index})">Del</button>
+                    </td>
+                `;
+                projectTableBody.appendChild(row);
+            });
+        }
+
+        // 프로젝트를 조회하는 함수 (mainPage.html로 연결)
+        function viewProject(index) {
+            const project = sampleProjects[index];
+            // 선택한 프로젝트의 이름을 URL 파라미터로 전달합니다.
+            window.location.href = `mainPage.html?project=${project.name}`;
+        }
+
+        // 프로젝트를 편집하는 함수 (모달 열기)
+        function editProject(index) {
+            currentEditProjectIndex = index;
+            const project = sampleProjects[index];
+            document.getElementById('editProjectName').value = project.name;
+            document.getElementById('editProjectDescription').value = project.description;
+            document.getElementById('editProjectModal').style.display = 'block';
+        }
+
+        // 프로젝트 편집 모달을 닫는 함수
+        function closeEditProjectModal() {
+            document.getElementById('editProjectModal').style.display = 'none';
+        }
+
+        // 프로젝트 편집 내용을 저장하는 함수
+        function saveEditProject() {
+            const newName = document.getElementById('editProjectName').value;
+            const newDescription = document.getElementById('editProjectDescription').value;
+            if (currentEditProjectIndex !== null && newName && newDescription) {
+                sampleProjects[currentEditProjectIndex].name = newName;
+                sampleProjects[currentEditProjectIndex].description = newDescription;
+                // 수정된 프로젝트 이름과 설명을 백엔드에 저장하는 로직이 추가되어야 합니다.
+                displayProjects(sampleProjects);
+                closeEditProjectModal();
+            }
+        }
+
+        // 프로젝트를 삭제하는 함수
+        function deleteProject(index) {
+            sampleProjects.splice(index, 1);
+            // 삭제된 프로젝트를 백엔드에 반영하는 로직이 추가되어야 합니다.
+            displayProjects(sampleProjects);
+        }
+
+        // 새로운 프로젝트 모달을 여는 함수
+        function openCreateProjectModal() {
+            document.getElementById('createProjectModal').style.display = 'block';
+        }
+
+        // 새로운 프로젝트 모달을 닫는 함수
+        function closeCreateProjectModal() {
+            document.getElementById('createProjectModal').style.display = 'none';
+        }
+
+        // 새로운 프로젝트를 저장하는 함수
+        function saveCreateProject() {
+            const name = document.getElementById('createProjectName').value;
+            const description = document.getElementById('createProjectDescription').value;
+            const createdDate = new Date().toISOString().split('T')[0];
+            const createdBy = loggedInUser;
+            if (name && description) {
+                sampleProjects.push({ name, description, createdDate, createdBy });
+                // 새로운 프로젝트를 백엔드에 저장하는 로직이 추가되어야 합니다.
+                displayProjects(sampleProjects);
+                closeCreateProjectModal();
+            }
+        }
+
+        // 초기 프로젝트 리스트 표시
+        displayProjects(sampleProjects);
+    </script>
+</body>
+
+</html>
