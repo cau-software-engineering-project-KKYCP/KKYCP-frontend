@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>로그인</title>
+    <title>회원가입</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -20,7 +20,7 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 300px;
+            width: 400px;
         }
 
         .form-group {
@@ -33,9 +33,12 @@
         }
 
         input[type="text"],
-        input[type="password"] {
+        input[type="password"],
+        input[type="email"] {
             width: calc(100% - 30px);
+            /* 입력 필드 너비 조정 */
             padding: 10px 15px;
+            /* 좌우 패딩 추가 */
             border: 1px solid #ccc;
             border-radius: 4px;
         }
@@ -54,43 +57,14 @@
             background-color: #5871ea;
         }
     </style>
-    <script>
-        // 로그인 폼 제출 이벤트 처리
-        document.addEventListener('DOMContentLoaded', function () {
-            const form = document.querySelector('form');
-            form.addEventListener('submit', async function (event) {
-                event.preventDefault(); // 폼의 기본 제출 동작을 막음
-
-                const userid = document.getElementById('userid').value;
-                const password = document.getElementById('password').value;
-
-                // 백엔드 로그인 API 호출 (실제 구현 필요)
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ userid, password })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    // 로그인 성공 시 startPage.html로 이동
-                    window.location.href = 'startPage.html';
-                } else {
-                    // 로그인 실패 시 사용자에게 알림
-                    alert('로그인 실패: ' + result.message);
-                }
-            });
-        });
-    </script>
+    <script src="register.js"></script>
 </head>
 
 <body>
     <div class="card">
-        <h2>로그인</h2>
+        <h2>회원가입</h2>
         <form>
+            
             <div class="form-group">
                 <label for="userid">ID:</label>
                 <input type="text" id="userid" name="userid" placeholder="ID" required>
@@ -99,11 +73,11 @@
                 <label for="password">비밀번호:</label>
                 <input type="password" id="password" name="password" placeholder="Password" required>
             </div>
-            <button type="submit">로그인</button>
+            <button type="submit">가입하기</button>
         </form>
         <p style="text-align: center; margin-top: 16px;">
-            아직 회원이 아니시라구요?
-            <button onclick="location.href='register.html'">회원가입 하기</button>
+            이미 회원이시라구요?
+            <button onclick="location.href='login.html'">로그인 하기</button>
         </p>
     </div>
 </body>
