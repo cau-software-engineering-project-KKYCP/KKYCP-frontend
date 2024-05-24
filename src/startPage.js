@@ -82,12 +82,14 @@ function closeCreateProjectModal() {
 }
 
 // 새로운 프로젝트를 저장하는 함수
-function saveCreateProject() {
+async function saveCreateProject() {
     const name = document.getElementById('createProjectName').value;
+    const createdDate = new Date().toISOString().split('T')[0];
+    const createdBy = loggedInUser;
     if (name) {
 
         // 새로운 프로젝트를 백엔드에 저장하는 로직 (fetch API 사용)
-        fetch('/api/project', {
+        await fetch('/api/project', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -100,7 +102,7 @@ function saveCreateProject() {
         .then(response => {
             // 프로젝트 생성 성공
             if (response.status === 201) {
-                return response.json();
+                sampleProjects.push({name, description:null ,createdDate, createdBy})
             } else if (response.status === 409) {
                 throw new Error('Project creation failed: The project name already exists.');
             } else {
@@ -109,15 +111,12 @@ function saveCreateProject() {
         })
         .then(data => {
             console.log('Project creation successful', data);
-            // 새로 생성된 프로젝트 ID 처리
-            console.log('Created Project ID:', data.project_id);
         })
         .catch(error => {
             console.error(error.message);
             alert(error.message);
         });
         // 백엔드 로직
-        
         displayProjects(sampleProjects);
         closeCreateProjectModal();
     }
