@@ -8,13 +8,13 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f6f8;
+            background: #f4f6f8;
             margin: 0;
             padding: 0;
         }
 
         header {
-            background-color: #007bff;
+            background: #007bff;
             color: white;
             padding: 1rem 0;
             text-align: center;
@@ -27,14 +27,10 @@
         .container {
             width: 80%;
             margin: 2rem auto;
-            background-color: white;
+            background: white;
             padding: 2rem;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            color: #007bff;
         }
 
         .project-list {
@@ -49,21 +45,21 @@
         }
 
         .project-list th {
-            background-color: #007bff;
+            background: #007bff;
             color: white;
             text-align: left;
         }
 
         .project-list tr:nth-child(even) {
-            background-color: #f2f2f2;
+            background: #f2f2f2;
         }
 
         .project-list tr:hover {
-            background-color: #ddd;
+            background: #ddd;
         }
 
         .btn {
-            background-color: #007bff;
+            background: #007bff;
             color: white;
             padding: 0.5rem 1rem;
             border: none;
@@ -72,7 +68,7 @@
         }
 
         .btn:hover {
-            background-color: #0056b3;
+            background: #0056b3;
         }
 
         .modal {
@@ -84,13 +80,13 @@
             width: 100%;
             height: 100%;
             overflow: auto;
-            background-color: rgb(0, 0, 0);
-            background-color: rgba(0, 0, 0, 0.4);
+            background: rgb(0, 0, 0);
+            background: rgba(0, 0, 0, 0.4);
             padding-top: 60px;
         }
 
         .modal-content {
-            background-color: #fefefe;
+            background: #fefefe;
             margin: 5% auto;
             padding: 20px;
             border: 1px solid #888;
@@ -106,7 +102,7 @@
         }
 
         .modal-header {
-            background-color: #007bff;
+            background: #007bff;
             color: white;
             border-top-left-radius: 8px;
             border-top-right-radius: 8px;
@@ -135,8 +131,13 @@
             justify-content: flex-end;
             margin-bottom: 1rem;
         }
+
+        .divider {
+            border-left: 1px solid #ddd;
+            height: 1rem;
+            margin: 0 0.5rem;
+        }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 
 <body>
@@ -177,8 +178,8 @@
                 <textarea id="createProjectDescription"></textarea>
             </div>
             <div class="modal-footer">
-                <button class="btn" onclick="saveCreateProject()">Create</button>
                 <button class="btn" onclick="closeCreateProjectModal()">Cancel</button>
+                <button class="btn" onclick="saveCreateProject()">Create</button>
             </div>
         </div>
     </div>
@@ -196,8 +197,8 @@
                 <textarea id="editProjectDescription"></textarea>
             </div>
             <div class="modal-footer">
-                <button class="btn" onclick="saveEditProject()">Save</button>
                 <button class="btn" onclick="closeEditProjectModal()">Cancel</button>
+                <button class="btn" onclick="saveEditProject()">Save</button>
             </div>
         </div>
     </div>
@@ -229,6 +230,8 @@
                         <button class="btn" onclick="viewProject(${index})">View</button>
                         <button class="btn" onclick="editProject(${index})">Edit</button>
                         <button class="btn" onclick="deleteProject(${index})">Del</button>
+                        <span class="divider"></span>
+                        <button class="btn" onclick="viewUserList(${index})">UserList</button>
                     </td>
                 `;
                 projectTableBody.appendChild(row);
@@ -240,6 +243,13 @@
             const project = sampleProjects[index];
             // 선택한 프로젝트의 이름을 URL 파라미터로 전달합니다.
             window.location.href = `mainPage.html?project=${project.name}`;
+        }
+
+        // 프로젝트의 사용자 목록을 보는 함수 (userListPage.html로 연결)
+        function viewUserList(index) {
+            const project = sampleProjects[index];
+            // 선택한 프로젝트의 이름을 URL 파라미터로 전달합니다.
+            window.location.href = `userListPage.html?project=${project.name}`;
         }
 
         // 프로젝트를 편집하는 함수 (모달 열기)
@@ -293,37 +303,8 @@
             const createdDate = new Date().toISOString().split('T')[0];
             const createdBy = loggedInUser;
             if (name && description) {
-                const projectData = { name, description, createdDate, createdBy };
-                sampleProjects.push(projectData);
-
-                // 새로운 프로젝트를 백엔드에 저장하는 로직
-                const username = 'yourUsername';
-                const password = 'yourPassword';
-                const basicAuth = 'Basic ' + btoa(username + ':' + password);
-
-                axios.post('http://localhost:8080/project', {
-                    project_name: name
-                }, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'Authorization': basicAuth
-                    }
-                }).then(response => {
-                    if (response.status === 201) {
-                        console.log('Project creation successful', response.data);
-                        // 여기서 추가적인 성공 로직을 실행할 수 있습니다.
-                    }
-                }).catch(error => {
-                    if (error.response && error.response.status === 409) {
-                        alert('Project creation failed: The project name already exists.');
-                    } else {
-                        console.error('An error occurred during project creation:', error);
-                        alert('An error occurred during project creation.');
-                    }
-                });
-                // 백엔드 로직
-                
+                sampleProjects.push({ name, description, createdDate, createdBy });
+                // 새로운 프로젝트를 백엔드에 저장하는 로직이 추가되어야 합니다.
                 displayProjects(sampleProjects);
                 closeCreateProjectModal();
             }

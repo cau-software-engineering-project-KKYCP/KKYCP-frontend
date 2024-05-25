@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User List</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: #007bff;
+            color: white;
+            padding: 1rem 0;
+            text-align: center;
+        }
+
+        header h1 {
+            color: white;
+        }
+
+        .container {
+            width: 80%;
+            margin: 2rem auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-list {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .user-list th,
+        .user-list td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        .user-list th {
+            background: #007bff;
+            color: white;
+            text-align: left;
+        }
+
+        .user-list tr:nth-child(even) {
+            background: #f2f2f2;
+        }
+
+        .user-list tr:hover {
+            background: #ddd;
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background: rgb(0, 0, 0);
+            background: rgba(0, 0, 0, 0.4);
+            padding-top: 60px;
+        }
+
+        .modal-content {
+            background: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+
+        .modal-header,
+        .modal-body,
+        .modal-footer {
+            padding: 10px;
+        }
+
+        .modal-header {
+            background: #007bff;
+            color: white;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .modal-footer .btn {
+            margin-left: 10px;
+        }
+
+        .modal-body input,
+        .modal-body select,
+        .modal-body textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .filter-select {
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        .add-user-btn {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+        }
+    </style>
+    <script>
+        // 프로젝트별 유저 데이터 샘플 (예시). 실제 유저 데이터는 백엔드에서 가져옵니다.
+        const projectUserData = {
+            'Project 1': [
+                { id: 'user1', nickname: 'User One', role: 'PL' },
+                { id: 'user2', nickname: 'User Two', role: 'dev' },
+                { id: 'user3', nickname: 'User Three', role: 'tester' },
+            ],
+            'Project 2': [
+                { id: 'user4', nickname: 'User Four', role: 'dev' },
+                { id: 'user5', nickname: 'User Five', role: 'PL' },
+                { id: 'user6', nickname: 'User Six', role: 'tester' },
+            ],
+            'Project 3': [
+                { id: 'user7', nickname: 'User Seven', role: 'dev' },
+                { id: 'user8', nickname: 'User Eight', role: 'PL' },
+                { id: 'user9', nickname: 'User Nine', role: 'tester' },
+            ]
+        };
+
+        let currentProject = null;
+        let filteredUsers = [];
+        let currentEditUser = null;
+
+        // URL 파라미터에서 프로젝트 이름 가져오기
+        const urlParams = new URLSearchParams(window.location.search);
+        currentProject = urlParams.get('project');
+        filteredUsers = projectUserData[currentProject] || [];
+
+        // 유저 리스트를 화면에 표시하는 함수
+        function displayUsers(users) {
+            const userTableBody = document.getElementById('user-table-body');
+            userTableBody.innerHTML = '';
+
+            users.forEach((user, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${user.id}</td>
+                    <td>${user.nickname}</td>
+                    <td>${user.role}</td>
+                    <td>
+                        <button class="btn" onclick="editUser(${index})">Edit</button>
+                        <button class="btn" onclick="deleteUser(${index})">Del</button>
+                    </td>
+                `;
+                userTableBody.appendChild(row);
+            });
+        }
+
+        // 권한 필터링 함수
+        function filterUsers() {
+            const roleFilter = document.getElementById('roleFilter').value;
+            if (roleFilter === '') {
+                filteredUsers = projectUserData[currentProject];
+            } else {
+                filteredUsers = projectUserData[currentProject].filter(user => user.role === roleFilter);
+            }
+            displayUsers(filteredUsers);
+        }
+
+        // 유저 편집 함수 (모달 열기)
+        function editUser(index) {
+            currentEditUser = filteredUsers[index];
+            document.getElementById('editUserId').innerText = currentEditUser.id;
+            document.getElementById('editUserNickname').innerText = currentEditUser.nickname;
+            document.getElementById('editUserRole').value = currentEditUser.role;
+            document.getElementById('editUserModal').style.display = 'block';
+        }
+
+        // 유저 편집 모달 닫기
+        function closeEditUserModal() {
+            document.getElementById('editUserModal').style.display = 'none';
+        }
+
+        // 유저 편집 내용을 저장하는 함수
+        function saveEditUser() {
+            if (currentEditUser) {
+                currentEditUser.role = document.getElementById('editUserRole').value;
+                displayUsers(filteredUsers);
+                closeEditUserModal();
+            }
+        }
+
+        // 유저 삭제 함수
+        function deleteUser(index) {
+            const userId = filteredUsers[index].id;
+            projectUserData[currentProject] = projectUserData[currentProject].filter(user => user.id !== userId);
+            filterUsers();
+        }
+
+        // 새로운 유저 추가 모달 열기
+        function openAddUserModal() {
+            document.getElementById('addUserModal').style.display = 'block';
+            displayAllUsers();
+        }
+
+        // 새로운 유저 추가 모달 닫기
+        function closeAddUserModal() {
+            document.getElementById('addUserModal').style.display = 'none';
+        }
+
+        // 모든 유저 데이터 (샘플)
+        const allUsers = [
+            { id: 'user1', nickname: 'User One', participated: ['Project 1'] },
+            { id: 'user2', nickname: 'User Two', participated: ['Project 1'] },
+            { id: 'user3', nickname: 'User Three', participated: ['Project 1'] },
+            { id: 'user4', nickname: 'User Four', participated: ['Project 2'] },
+            { id: 'user5', nickname: 'User Five', participated: ['Project 2'] },
+            { id: 'user6', nickname: 'User Six', participated: ['Project 2'] },
+            { id: 'user7', nickname: 'User Seven', participated: ['Project 3'] },
+            { id: 'user8', nickname: 'User Eight', participated: ['Project 3'] },
+            { id: 'user9', nickname: 'User Nine', participated: ['Project 3'] },
+            { id: 'user10', nickname: 'User Ten', participated: [] },
+            { id: 'user11', nickname: 'User Eleven', participated: [] },
+            { id: 'user12', nickname: 'User Twelve', participated: [] }
+        ];
+
+        // 선택된 유저 데이터 (샘플)
+        const selectedUsers = [];
+
+        // 모든 유저 리스트를 화면에 표시하는 함수
+        function displayAllUsers() {
+            const allUserTableBody = document.getElementById('all-user-table-body');
+            allUserTableBody.innerHTML = '';
+
+            allUsers.forEach((user, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${user.id}</td>
+                    <td>${user.nickname}</td>
+                    <td>${user.participated.join(', ')}</td>
+                    <td><button class="btn" onclick="addUser(${index})">Add</button></td>
+                `;
+                allUserTableBody.appendChild(row);
+            });
+        }
+
+        // 선택된 유저 리스트를 화면에 표시하는 함수
+        function displaySelectedUsers() {
+            const selectedUserTableBody = document.getElementById('selected-user-table-body');
+            selectedUserTableBody.innerHTML = '';
+
+            selectedUsers.forEach((user, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${user.id}</td>
+                    <td>${user.nickname}</td>
+                    <td>
+                        <select onchange="updateUserRole(${index}, this.value)">
+                            <option value="PL">PL</option>
+                            <option value="dev">dev</option>
+                            <option value="tester">tester</option>
+                        </select>
+                    </td>
+                `;
+                selectedUserTableBody.appendChild(row);
+            });
+        }
+
+        // 유저 추가 함수
+        function addUser(index) {
+            const user = allUsers[index];
+            if (!selectedUsers.find(u => u.id === user.id)) {
+                selectedUsers.push({ ...user, role: 'PL' }); // 기본 역할 PL로 추가
+                displaySelectedUsers();
+            }
+        }
+
+        // 유저 역할 업데이트 함수
+        function updateUserRole(index, role) {
+            selectedUsers[index].role = role;
+        }
+
+        // 선택된 유저 저장 함수
+        function saveAddedUsers() {
+            // selectedUsers를 백엔드에 저장하는 로직 필요
+            closeAddUserModal();
+            // 화면 갱신
+            selectedUsers.forEach(user => {
+                projectUserData[currentProject].push(user);
+            });
+            filterUsers();
+        }
+
+        // 초기 유저 리스트 표시
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelector('header h1').textContent = `User List for ${currentProject}`;
+            filterUsers();
+            displayAllUsers();
+        });
+    </script>
+</head>
+
+<body>
+    <header>
+        <h1>User List for ${currentProject}</h1>
+    </header>
+    <div class="container">
+        <div class="filter-select">
+            <label for="roleFilter">Filter by Authorization:</label>
+            <select id="roleFilter" onchange="filterUsers()">
+                <option value="">None</option>
+                <option value="PL">PL</option>
+                <option value="dev">dev</option>
+                <option value="tester">tester</option>
+            </select>
+        </div>
+        <div class="add-user-btn">
+            <button class="btn" onclick="openAddUserModal()">Add User</button>
+        </div>
+        <table class="user-list">
+            <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>ID</th>
+                    <th>Nickname</th>
+                    <th>Authorization</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="user-table-body">
+                <!-- User rows will be inserted here dynamically -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Edit User Modal -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>권한 설정</h2>
+            </div>
+            <div class="modal-body">
+                <p><strong>ID:</strong> <span id="editUserId"></span></p>
+                <p><strong>Nickname:</strong> <span id="editUserNickname"></span></p>
+                <label for="editUserRole">Role</label>
+                <select id="editUserRole">
+                    <option value="PL">PL</option>
+                    <option value="dev">dev</option>
+                    <option value="tester">tester</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeEditUserModal()">Cancel</button>
+                <button class="btn" onclick="saveEditUser()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add User</h2>
+            </div>
+            <div class="modal-body">
+                <div style="max-height: 300px; overflow-y: auto;">
+                    <table class="user-list">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>ID</th>
+                                <th>Nickname</th>
+                                <th>Participated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-user-table-body">
+                            <!-- All user rows will be inserted here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                <div style="border-top: 1px solid #ddd; padding-top: 10px;">
+                    <h3>Selected Users</h3>
+                    <table class="user-list">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>ID</th>
+                                <th>Nickname</th>
+                                <th>Role</th>
+                            </tr>
+                        </thead>
+                        <tbody id="selected-user-table-body">
+                            <!-- Selected user rows will be inserted here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeAddUserModal()">Cancel</button>
+                <button class="btn" onclick="saveAddedUsers()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 모든 유저 데이터 (샘플)
+        const allUsers = [
+            { id: 'user1', nickname: 'User One', participated: ['Project 1'] },
+            { id: 'user2', nickname: 'User Two', participated: ['Project 1'] },
+            { id: 'user3', nickname: 'User Three', participated: ['Project 1'] },
+            { id: 'user4', nickname: 'User Four', participated: ['Project 2'] },
+            { id: 'user5', nickname: 'User Five', participated: ['Project 2'] },
+            { id: 'user6', nickname: 'User Six', participated: ['Project 2'] },
+            { id: 'user7', nickname: 'User Seven', participated: ['Project 3'] },
+            { id: 'user8', nickname: 'User Eight', participated: ['Project 3'] },
+            { id: 'user9', nickname: 'User Nine', participated: ['Project 3'] },
+            { id: 'user10', nickname: 'User Ten', participated: [] },
+            { id: 'user11', nickname: 'User Eleven', participated: [] },
+            { id: 'user12', nickname: 'User Twelve', participated: [] }
+        ];
+
+        // 선택된 유저 데이터 (샘플)
+        const selectedUsers = [];
+
+        // 모든 유저 리스트를 화면에 표시하는 함수
+        function displayAllUsers() {
+            const allUserTableBody = document.getElementById('all-user-table-body');
+            allUserTableBody.innerHTML = '';
+
+            allUsers.forEach((user, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${user.id}</td>
+                    <td>${user.nickname}</td>
+                    <td>${user.participated.join(', ')}</td>
+                    <td><button class="btn" onclick="addUser(${index})">Add</button></td>
+                `;
+                allUserTableBody.appendChild(row);
+            });
+        }
+
+        // 선택된 유저 리스트를 화면에 표시하는 함수
+        function displaySelectedUsers() {
+            const selectedUserTableBody = document.getElementById('selected-user-table-body');
+            selectedUserTableBody.innerHTML = '';
+
+            selectedUsers.forEach((user, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${user.id}</td>
+                    <td>${user.nickname}</td>
+                    <td>
+                        <select onchange="updateUserRole(${index}, this.value)">
+                            <option value="PL">PL</option>
+                            <option value="dev">dev</option>
+                            <option value="tester">tester</option>
+                        </select>
+                    </td>
+                `;
+                selectedUserTableBody.appendChild(row);
+            });
+        }
+
+        // 유저 추가 함수
+        function addUser(index) {
+            const user = allUsers[index];
+            if (!selectedUsers.find(u => u.id === user.id)) {
+                selectedUsers.push({ ...user, role: 'PL' }); // 기본 역할 PL로 추가
+                displaySelectedUsers();
+            }
+        }
+
+        // 유저 역할 업데이트 함수
+        function updateUserRole(index, role) {
+            selectedUsers[index].role = role;
+        }
+
+        // 선택된 유저 저장 함수
+        function saveAddedUsers() {
+            // selectedUsers를 백엔드에 저장하는 로직 필요
+            closeAddUserModal();
+            // 화면 갱신
+            selectedUsers.forEach(user => {
+                projectUserData[currentProject].push(user);
+            });
+            filterUsers();
+        }
+
+        // 초기 유저 리스트 표시
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelector('header h1').textContent = `User List for ${currentProject}`;
+            filterUsers();
+            displayAllUsers();
+        });
+    </script>
+</body>
+
+</html>
