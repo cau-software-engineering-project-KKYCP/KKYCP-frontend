@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KKYCP - Issue Manager</title>
+    <title>User List</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background: #f4f6f8;
+            background: #f4f4f4;
             margin: 0;
             padding: 0;
         }
@@ -33,28 +33,28 @@
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
-        .project-list {
+        .user-list {
             width: 100%;
             border-collapse: collapse;
         }
 
-        .project-list th,
-        .project-list td {
+        .user-list th,
+        .user-list td {
             border: 1px solid #ddd;
             padding: 8px;
         }
 
-        .project-list th {
+        .user-list th {
             background: #007bff;
             color: white;
             text-align: left;
         }
 
-        .project-list tr:nth-child(even) {
+        .user-list tr:nth-child(even) {
             background: #f2f2f2;
         }
 
-        .project-list tr:hover {
+        .user-list tr:hover {
             background: #ddd;
         }
 
@@ -118,6 +118,7 @@
         }
 
         .modal-body input,
+        .modal-body select,
         .modal-body textarea {
             width: 100%;
             padding: 8px;
@@ -126,16 +127,15 @@
             border-radius: 4px;
         }
 
-        .create-btn {
+        .filter-select {
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        .add-user-btn {
             display: flex;
             justify-content: flex-end;
             margin-bottom: 1rem;
-        }
-
-        .divider {
-            border-left: 1px solid #ddd;
-            height: 1rem;
-            margin: 0 0.5rem;
         }
 
         .pagination {
@@ -163,77 +163,119 @@
             cursor: default;
         }
     </style>
+
+    <script src="userListPage.js"></script>
+
 </head>
 
 <body>
     <header>
-        <h1>KKYCP - Issue Manager</h1>
+        <h1>User List for ${currentProject}</h1>
     </header>
     <div class="container">
-        <h1>Project List</h1>
-        <div class="create-btn">
-            <button class="btn" onclick="openCreateProjectModal()">Create New Project</button>
+        <div class="filter-select">
+            <label for="roleFilter">Filter by Authorization:</label>
+            <select id="roleFilter" onchange="filterUsers()">
+                <option value="">None</option>
+                <option value="PL">PL</option>
+                <option value="dev">dev</option>
+                <option value="tester">tester</option>
+            </select>
         </div>
-        <table class="project-list">
+        <div class="add-user-btn">
+            <button class="btn" onclick="openAddUserModal()">Add User</button>
+        </div>
+        <table class="user-list">
             <thead>
                 <tr>
                     <th>No.</th>
-                    <th>Project Name</th>
-                    <th>Description</th>
-                    <th>Created Date</th>
-                    <th>Created By</th>
+                    <th>ID</th>
+                    <th>Nickname</th>
+                    <th>Authorization</th>
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody id="project-table-body">
-                <!-- Project rows will be inserted here dynamically -->
+            <tbody id="user-table-body">
+                <!-- User rows will be inserted here dynamically -->
             </tbody>
         </table>
-        <div class="pagination" id="pagination">
+        <div class="pagination" id="user-pagination">
             <!-- Pagination buttons will be inserted here dynamically -->
         </div>
     </div>
 
-    <!-- Create Project Modal -->
-    <div id="createProjectModal" class="modal">
+    <!-- Edit User Modal -->
+    <div id="editUserModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Create Project</h2>
+                <h2>권한 설정</h2>
             </div>
             <div class="modal-body">
-                <label for="createProjectName">Project Name</label>
-                <input type="text" id="createProjectName">
-                <label for="createProjectDescription">Description</label>
-                <textarea id="createProjectDescription"></textarea>
+                <p><strong>ID:</strong> <span id="editUserId"></span></p>
+                <p><strong>Nickname:</strong> <span id="editUserNickname"></span></p>
+                <label for="editUserRole">Role</label>
+                <select id="editUserRole">
+                    <option value="PL">PL</option>
+                    <option value="dev">dev</option>
+                    <option value="tester">tester</option>
+                </select>
             </div>
             <div class="modal-footer">
-                <button class="btn" onclick="closeCreateProjectModal()">Cancel</button>
-                <button class="btn" onclick="saveCreateProject()">Create</button>
+                <button class="btn" onclick="closeEditUserModal()">Cancel</button>
+                <button class="btn" onclick="saveEditUser()">Save</button>
             </div>
         </div>
     </div>
 
-    <!-- Edit Project Modal -->
-    <div id="editProjectModal" class="modal">
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Edit Project</h2>
+                <h2>Add User</h2>
             </div>
             <div class="modal-body">
-                <label for="editProjectName">Project Name</label>
-                <input type="text" id="editProjectName">
-                <label for="editProjectDescription">Description</label>
-                <textarea id="editProjectDescription"></textarea>
+                <div style="max-height: 300px; overflow-y: auto;">
+                    <table class="user-list">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>ID</th>
+                                <th>Nickname</< /th>
+                                <th>Participated</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-user-table-body">
+                            <!-- All user rows will be inserted here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="all-user-pagination">
+                    <!-- Pagination buttons will be inserted here dynamically -->
+                </div>
+                <div style="border-top: 1px solid #ddd; padding-top: 10px;">
+                    <h3>Selected Users</h3>
+                    <table class="user-list">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>ID</th>
+                                <th>Nickname</th>
+                                <th>Role</th>
+                            </tr>
+                        </thead>
+                        <tbody id="selected-user-table-body">
+                            <!-- Selected user rows will be inserted here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
             <div class="modal-footer">
-                <button class="btn" onclick="closeEditProjectModal()">Cancel</button>
-                <button class="btn" onclick="saveEditProject()">Save</button>
+                <button class="btn" onclick="closeAddUserModal()">Cancel</button>
+                <button class="btn" onclick="saveAddedUsers()">Save</button>
             </div>
         </div>
     </div>
-
-    <script src="startPage.js"></script>
-
 </body>
 
 </html>

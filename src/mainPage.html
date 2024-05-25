@@ -18,10 +18,32 @@
             color: white;
             padding: 1rem 0;
             text-align: center;
+            position: relative;
         }
 
         header h1 {
             color: white;
+            margin-bottom: 1rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .action-buttons .btn {
+            background-color: white;
+            color: black;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 1px solid #007bff;
+        }
+
+        .action-buttons .btn:hover {
+            background-color: #f0f0f0;
         }
 
         .container {
@@ -211,12 +233,41 @@
         .comment-actions .btn-edit {
             background-color: #007bff;
         }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .pagination button {
+            background: #007bff;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 2px;
+        }
+
+        .pagination button:hover {
+            background: #0056b3;
+        }
+
+        .pagination button.disabled {
+            background: #ccc;
+            cursor: default;
+        }
     </style>
 </head>
 
 <body>
     <header>
         <h1>KKYCP - Issue Manager</h1>
+        <div class="action-buttons">
+            <button class="btn" onclick="openUserListModal()">Participated Users</button>
+            <button class="btn" onclick="openIssueStatisticsModal()">Issue Statistics</button>
+        </div>
         <div class="project-select">
             <select id="projectSelect" onchange="changeProject()">
                 <!-- 옵션은 나중에 동적으로 추가됩니다. -->
@@ -229,6 +280,7 @@
                 <option value="title">Title</option>
                 <option value="reporter">Reporter</option>
                 <option value="assignee">Assignee</option>
+                <option value="type">Type</option>
             </select>
             <input type="text" id="search" placeholder="Search issues..." onkeypress="handleKeyPress(event)">
             <button class="btn" onclick="searchIssues()">Search</button>
@@ -236,6 +288,7 @@
         <table class="issue-list">
             <thead>
                 <tr>
+                    <th>No.</th>
                     <th>Issue Title</th>
                     <th>Reporter</th>
                     <th>Assignee</th>
@@ -261,6 +314,7 @@
                             <option value="reopened">reopened</option>
                         </select>
                     </th>
+                    <th>Type</th>
                     <th>
                         Reported Date
                         <select class="filter-select" id="dateFilter" onchange="filterIssues()">
@@ -278,6 +332,9 @@
         </table>
         <div id="no-results" class="no-results" style="display: none;">No matching items found</div>
         <button class="btn" onclick="openCreateIssueModal()">Create New Issue</button>
+        <div class="pagination" id="pagination">
+            <!-- Pagination buttons will be inserted here dynamically -->
+        </div>
     </div>
 
     <!-- View Issue Modal -->
@@ -293,6 +350,7 @@
                 <p><strong>Assignee:</strong> <span id="viewAssignee"></span></p>
                 <p><strong>Priority:</strong> <span id="viewPriority"></span></p>
                 <p><strong>Status:</strong> <span id="viewStatus"></span></p>
+                <p><strong>Type:</strong> <span id="viewType"></span></p>
                 <div class="comments">
                     <h3>Comments</h3>
                     <div id="viewComments"></div>
@@ -314,7 +372,7 @@
                 <label for="editTitle">Issue Title</label>
                 <input type="text" id="editTitle">
                 <label for="editAssignee">Assignee</label>
-                <input type="text" id="editAssignee">
+                <select id="editAssignee"></select>
                 <label for="editPriority">Priority</label>
                 <select id="editPriority">
                     <option value="blocker">blocker</option>
@@ -331,6 +389,8 @@
                     <option value="closed">closed</option>
                     <option value="reopened">reopened</option>
                 </select>
+                <label for="editType">Type</label>
+                <input type="text" id="editType">
                 <div class="comments">
                     <h3>Comments</h3>
                     <div id="editComments"></div>
@@ -358,7 +418,7 @@
                 <label for="createDescription">Description</label>
                 <textarea id="createDescription"></textarea>
                 <label for="createAssignee">Assignee</label>
-                <input type="text" id="createAssignee">
+                <select id="createAssignee"></select>
                 <label for="createPriority">Priority</label>
                 <select id="createPriority">
                     <option value="blocker">blocker</option>
@@ -375,6 +435,8 @@
                     <option value="closed">closed</option>
                     <option value="reopened">reopened</option>
                 </select>
+                <label for="createType">Type</label>
+                <input type="text" id="createType">
             </div>
             <div class="modal-footer">
                 <button class="btn" onclick="closeCreateIssueModal()">Cancel</button>
@@ -383,311 +445,57 @@
         </div>
     </div>
 
-    <script>
-        // DB에서 불러온 프로젝트 데이터로 초기화할 변수들
-        let sampleIssues = {}; // 각 프로젝트의 이슈 데이터를 저장하는 객체
-        let projects = []; // 프로젝트 목록
+    <!-- Participated Users Modal -->
+    <div id="userListModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Participated Users</h2>
+            </div>
+            <div class="modal-body">
+                <table class="user-list">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>ID</th>
+                            <th>Nickname</th>
+                            <th>Authorization</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-list-body">
+                        <!-- User rows will be inserted here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeUserListModal()">Close</button>
+            </div>
+        </div>
+    </div>
 
-        let currentProject = null; // 현재 선택된 프로젝트
-        let currentViewIssue = null;
-        let currentEditIssue = null;
-        let currentEditCommentIndex = null;
-        let loggedInUser = 'currentUser';
+    <!-- Issue Statistics Modal -->
+    <div id="issueStatisticsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Issue Statistics</h2>
+            </div>
+            <div class="modal-body">
+                <label for="statisticType">Statistic Type</label>
+                <select id="statisticType" onchange="generateStatistics()">
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                </select>
+                <div id="statisticsResult"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeIssueStatisticsModal()">Close</button>
+            </div>
+        </div>
+    </div>
 
-        // 백엔드에서 프로젝트 데이터를 가져와서 초기화하는 함수
-        async function fetchProjects() {
-            // 실제 API 호출 코드로 교체 필요
-            // 예시: const response = await fetch('/api/projects');
-            // const data = await response.json();
-            const data = [
-                { name: 'Project 1', description: 'Description for Project 1', createdDate: '2024-01-01', createdBy: 'Admin 1' },
-                { name: 'Project 2', description: 'Description for Project 2', createdDate: '2024-02-01', createdBy: 'Admin 2' },
-                { name: 'Project 3', description: 'Description for Project 3', createdDate: '2024-03-01', createdBy: 'Admin 3' }
-            ];
-            projects = data;
-            displayProjects();
-        }
+    <script src="mainPage.js"></script>
 
-        // 프로젝트 목록을 드롭다운에 표시하는 함수
-        function displayProjects() {
-            const projectSelect = document.getElementById('projectSelect');
-            projectSelect.innerHTML = '';
-
-            projects.forEach(project => {
-                const option = document.createElement('option');
-                option.value = project.name;
-                option.text = project.name;
-                projectSelect.appendChild(option);
-            });
-
-            // URL 파라미터에서 선택된 프로젝트를 가져와 설정
-            const urlParams = new URLSearchParams(window.location.search);
-            const selectedProject = urlParams.get('project');
-            if (selectedProject) {
-                projectSelect.value = selectedProject;
-                currentProject = selectedProject;
-            } else {
-                currentProject = projects.length > 0 ? projects[0].name : null;
-            }
-
-            if (currentProject) {
-                fetchIssues(currentProject);
-            }
-        }
-
-        // 선택된 프로젝트의 이슈 데이터를 백엔드에서 불러오는 함수
-        async function fetchIssues(projectName) {
-            // 실제 API 호출 코드로 교체 필요
-            // 예시: const response = await fetch(`/api/issues?project=${projectName}`);
-            // const data = await response.json();
-            const data = {
-                'Project 1': [
-                    { title: 'Sample Issue 1', description: 'Description for Sample Issue 1', reporter: 'tester1', assignee: '', priority: 'major', status: 'new', reportedDate: '2024-05-18', comments: [] },
-                    { title: 'Sample Issue 2', description: 'Description for Sample Issue 2', reporter: 'tester2', assignee: 'dev1', priority: 'critical', status: 'assigned', reportedDate: '2024-05-18', comments: [] }
-                ],
-                'Project 2': [
-                    { title: 'Project 2 Issue 1', description: 'Description for Project 2 Issue 1', reporter: 'user1', assignee: 'dev1', priority: 'major', status: 'new', reportedDate: '2024-05-10', comments: [] }
-                ],
-                'Project 3': [
-                    { title: 'Project 3 Issue 1', description: 'Description for Project 3 Issue 1', reporter: 'user3', assignee: 'dev3', priority: 'minor', status: 'resolved', reportedDate: '2024-05-08', comments: [] }
-                ]
-            };
-            sampleIssues[projectName] = data[projectName] || [];
-            displayIssues(sampleIssues[projectName]);
-        }
-
-        // 프로젝트 변경 시 호출되는 함수
-        function changeProject() {
-            const projectSelect = document.getElementById('projectSelect');
-            currentProject = projectSelect.value;
-            fetchIssues(currentProject);
-        }
-
-        // 이슈 리스트를 화면에 표시하는 함수
-        function displayIssues(issues) {
-            const issueTableBody = document.getElementById('issue-table-body');
-            const noResults = document.getElementById('no-results');
-            issueTableBody.innerHTML = '';
-
-            if (issues.length === 0) {
-                noResults.style.display = 'block';
-            } else {
-                noResults.style.display = 'none';
-                issues.forEach(issue => {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${issue.title}</td>
-                        <td>${issue.reporter}</td>
-                        <td>${issue.assignee}</td>
-                        <td>${issue.priority}</td>
-                        <td>${issue.status}</td>
-                        <td>${issue.reportedDate}</td>
-                        <td>
-                            <button class="btn" onclick="viewIssue('${issue.title}')">View</button>
-                            <button class="btn" onclick="editIssue('${issue.title}')">Edit</button>
-                            <button class="btn" onclick="deleteIssue('${issue.title}')">Del</button>
-                        </td>
-                    `;
-                    issueTableBody.appendChild(row);
-                });
-            }
-        }
-
-        // 이슈 검색 함수
-        function searchIssues() {
-            const searchQuery = document.getElementById('search').value.toLowerCase();
-            const searchOption = document.getElementById('searchOption').value;
-            const filteredIssues = sampleIssues[currentProject].filter(issue =>
-                issue[searchOption].toLowerCase().includes(searchQuery)
-            );
-            displayIssues(filteredIssues);
-        }
-
-        // 필터링된 이슈를 화면에 표시하는 함수
-        function filterIssues() {
-            const priorityFilter = document.getElementById('priorityFilter').value;
-            const statusFilter = document.getElementById('statusFilter').value;
-            const dateFilter = document.getElementById('dateFilter').value;
-
-            let filteredIssues = sampleIssues[currentProject].filter(issue =>
-                (priorityFilter === "" || issue.priority === priorityFilter) &&
-                (statusFilter === "" || issue.status === statusFilter)
-            );
-
-            if (dateFilter === "asc") {
-                filteredIssues.sort((a, b) => new Date(a.reportedDate) - new Date(b.reportedDate));
-            } else if (dateFilter === "desc") {
-                filteredIssues.sort((a, b) => new Date(b.reportedDate) - new Date(a.reportedDate));
-            }
-
-            displayIssues(filteredIssues);
-        }
-
-        // 엔터 키 입력 시 검색 함수 호출
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                searchIssues();
-            }
-        }
-
-        // 엔터 키 입력 시 댓글 추가 함수 호출
-        function handleCommentKeyPress(event) {
-            if (event.key === 'Enter') {
-                addComment();
-            }
-        }
-
-        // 새로운 이슈를 생성하는 모달 열기
-        function openCreateIssueModal() {
-            document.getElementById('createIssueModal').style.display = 'block';
-        }
-
-        // 새로운 이슈 생성 모달 닫기
-        function closeCreateIssueModal() {
-            document.getElementById('createIssueModal').style.display = 'none';
-        }
-
-        // 새로운 이슈를 저장하는 함수
-        function saveCreateIssue() {
-            const title = document.getElementById('createTitle').value;
-            const description = document.getElementById('createDescription').value;
-            const assignee = document.getElementById('createAssignee').value;
-            const priority = document.getElementById('createPriority').value;
-            const status = document.getElementById('createStatus').value;
-            const reportedDate = new Date().toISOString().split('T')[0];
-            const reporter = loggedInUser;
-
-            if (title && description) {
-                const newIssue = { title, description, reporter, assignee, priority, status, reportedDate, comments: [] };
-                sampleIssues[currentProject].push(newIssue);
-                // 새로운 이슈를 백엔드에 저장하는 로직이 추가되어야 합니다.
-                displayIssues(sampleIssues[currentProject]);
-                closeCreateIssueModal();
-            }
-        }
-
-        // 이슈를 조회하는 함수
-        function viewIssue(title) {
-            currentViewIssue = sampleIssues[currentProject].find(issue => issue.title === title);
-            if (currentViewIssue) {
-                document.getElementById('viewModalTitle').innerText = currentViewIssue.title; // 모달 제목에 이슈 제목 표시
-                document.getElementById('viewDescription').innerText = currentViewIssue.description;
-                document.getElementById('viewReporter').innerText = currentViewIssue.reporter;
-                document.getElementById('viewReportedDate').innerText = currentViewIssue.reportedDate;
-                document.getElementById('viewAssignee').innerText = currentViewIssue.assignee;
-                document.getElementById('viewPriority').innerText = currentViewIssue.priority;
-                document.getElementById('viewStatus').innerText = currentViewIssue.status;
-                displayComments('viewComments', currentViewIssue.comments, false);
-                document.getElementById('viewModal').style.display = 'block';
-            }
-        }
-
-        // 이슈 조회 모달을 닫는 함수
-        function closeViewModal() {
-            document.getElementById('viewModal').style.display = 'none';
-        }
-
-        // 이슈를 편집하는 함수
-        function editIssue(title) {
-            currentEditIssue = sampleIssues[currentProject].find(issue => issue.title === title);
-            if (currentEditIssue) {
-                document.getElementById('editTitle').value = currentEditIssue.title;
-                document.getElementById('editAssignee').value = currentEditIssue.assignee;
-                document.getElementById('editPriority').value = currentEditIssue.priority;
-                document.getElementById('editStatus').value = currentEditIssue.status;
-                displayComments('editComments', currentEditIssue.comments, true);
-                document.getElementById('editModal').style.display = 'block';
-            }
-        }
-
-        // 이슈 편집 모달을 닫는 함수
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-        }
-
-        // 이슈 편집 내용을 저장하는 함수
-        function saveEditIssue() {
-            if (currentEditIssue) {
-                currentEditIssue.title = document.getElementById('editTitle').value;
-                currentEditIssue.assignee = document.getElementById('editAssignee').value;
-                currentEditIssue.priority = document.getElementById('editPriority').value;
-                currentEditIssue.status = document.getElementById('editStatus').value;
-                displayIssues(sampleIssues[currentProject]);
-                closeEditModal();
-            }
-        }
-
-        // 새로운 댓글을 추가하는 함수
-        function addComment() {
-            const commentText = document.getElementById('newComment').value;
-            if (commentText && currentEditIssue) {
-                currentEditIssue.comments.push({ author: loggedInUser, text: commentText, date: new Date().toISOString() });
-                displayComments('editComments', currentEditIssue.comments, true);
-                document.getElementById('newComment').value = '';
-            }
-        }
-
-        // 댓글을 편집하는 함수
-        function editComment(index) {
-            currentEditCommentIndex = index;
-            document.getElementById('editCommentText').value = currentEditIssue.comments[index].text;
-            document.getElementById('editCommentModal').style.display = 'block';
-        }
-
-        // 댓글 편집 모달을 닫는 함수
-        function closeEditCommentModal() {
-            document.getElementById('editCommentModal').style.display = 'none';
-        }
-
-        // 댓글 편집 내용을 저장하는 함수
-        function saveEditComment() {
-            if (currentEditCommentIndex !== null && currentEditIssue) {
-                currentEditIssue.comments[currentEditCommentIndex].text = document.getElementById('editCommentText').value;
-                displayComments('editComments', currentEditIssue.comments, true);
-                closeEditCommentModal();
-            }
-        }
-
-        // 댓글을 삭제하는 함수
-        function deleteComment(index) {
-            if (currentEditIssue) {
-                currentEditIssue.comments.splice(index, 1);
-                displayComments('editComments', currentEditIssue.comments, true);
-            }
-        }
-
-        // 댓글을 화면에 표시하는 함수
-        function displayComments(containerId, comments, isEditable) {
-            const commentContainer = document.getElementById(containerId);
-            commentContainer.innerHTML = '';
-            comments.forEach((comment, index) => {
-                const commentElement = document.createElement('div');
-                commentElement.classList.add('comment');
-                commentElement.innerHTML = `
-                    <div>
-                        <div class="comment-author">${comment.author}</div>
-                        <div class="comment-date">${new Date(comment.date).toLocaleString()}</div>
-                        <div class="comment-text">${comment.text}</div>
-                    </div>
-                    ${isEditable ? `
-                    <div class="comment-actions">
-                        <button class="btn btn-edit" onclick="editComment(${index})">Edit</button>
-                        <button class="btn" onclick="deleteComment(${index})">Delete</button>
-                    </div>
-                    ` : ''}
-                `;
-                commentContainer.appendChild(commentElement);
-            });
-        }
-
-        // 이슈를 삭제하는 함수
-        function deleteIssue(title) {
-            sampleIssues[currentProject] = sampleIssues[currentProject].filter(issue => issue.title !== title);
-            displayIssues(sampleIssues[currentProject]);
-        }
-
-        fetchProjects(); // 초기 프로젝트 데이터를 가져옵니다.
-    </script>
 </body>
 
 </html>
