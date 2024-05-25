@@ -1,5 +1,6 @@
 // 샘플 데이터 (예시). 실제 프로젝트 데이터는 백엔드에서 가져옵니다.
 const sampleProjects = [
+    /*
     { name: 'Project 1', description: 'Description for Project 1', createdDate: '2024-01-01', createdBy: 'Admin 1' },
     { name: 'Project 2', description: 'Description for Project 2', createdDate: '2024-02-01', createdBy: 'Admin 2' },
     { name: 'Project 3', description: 'Description for Project 3', createdDate: '2024-03-01', createdBy: 'Admin 3' },
@@ -25,6 +26,7 @@ const sampleProjects = [
     { name: 'Project 23', description: 'Description for Project 23', createdDate: '2025-11-01', createdBy: 'Admin 23' },
     { name: 'Project 24', description: 'Description for Project 24', createdDate: '2025-12-01', createdBy: 'Admin 24' },
     { name: 'Project 25', description: 'Description for Project 25', createdDate: '2026-01-01', createdBy: 'Admin 25' }
+*/
 ];
 
 let currentEditProjectIndex = null;
@@ -46,7 +48,7 @@ function displayProjects(projects, page) {
     paginatedProjects.forEach((project, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${start + index + 1}</td>
+            <td>${project.id}</td>
             <td>${project.name}</td>
             <td>${project.description}</td>
             <td>${project.createdDate}</td>
@@ -93,15 +95,15 @@ function changePage(page) {
 function viewProject(index) {
     const project = sampleProjects[index];
     // 선택한 프로젝트의 이름을 URL 파라미터로 전달합니다.
-    window.location.href = `mainPage.html?project=${project.name}`;
+    window.location.href = `mainPage.html?projectId=${project.id}`;
 }
 
 // 프로젝트의 사용자 목록을 보는 함수 (userListPage.html로 연결)
 function viewUserList(index) {
     const project = sampleProjects[index];
     // 선택한 프로젝트의 이름을 URL 파라미터로 전달합니다.
-    window.location.href = `userListPage.html?project=${project.name}`;
-}
+    window.location.href = `userListPage.html?projectId=${project.id}`;
+} //projectId는 우선 조회한 index를 넘겨주는 것으로 설정했음.
 
 // 프로젝트를 편집하는 함수 (모달 열기)
 function editProject(index) {
@@ -150,14 +152,13 @@ function closeCreateProjectModal() {
 }
 
 // 새로운 프로젝트를 저장하는 함수
-async function saveCreateProject() {
+function saveCreateProject() {
     const name = document.getElementById('createProjectName').value;
     const createdDate = new Date().toISOString().split('T')[0];
     const createdBy = loggedInUser;
     if (name) {
-
         // 새로운 프로젝트를 백엔드에 저장하는 로직 (fetch API 사용)
-        await fetch('/api/project', {
+        fetch('/api/project', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -167,26 +168,26 @@ async function saveCreateProject() {
                 project_name: name
             })
         })
-            .then(response => {
-                // 프로젝트 생성 성공
-                if (response.status === 201) {
-                    sampleProjects.push({ name, description: null, createdDate, createdBy })
-                } else if (response.status === 409) {
-                    throw new Error('Project creation failed: The project name already exists.');
-                } else {
-                    throw new Error('An error occurred during project creation.');
-                }
-            })
-            .then(data => {
-                console.log('Project creation successful', data);
-            })
-            .catch(error => {
-                console.error(error.message);
-                alert(error.message);
-            });
-        // 백엔드 로직
-        displayProjects(sampleProjects);
-        closeCreateProjectModal();
+        .then(response => {
+            // 프로젝트 생성 성공
+            if (response.status == 201) {
+                return response.json(); 
+            } else if (response.status === 409) {
+                throw new Error('Project creation failed: The project name already exists.');
+            } else {
+                throw new Error('An error occurred during project creation.');
+            }
+        })
+        .then(data => {
+            console.log('Project creation successful', data, data.projcet_id);
+            sampleProjects.push({ id : data.project_id, name : name, description: null, createdDate: createdDate, createdBy: createdBy })
+            displayProjects(sampleProjects, currentPage);
+            closeCreateProjectModal();
+        })
+        .catch(error => {
+            console.error(error.message);
+            alert(error.message);
+        });
     }
 }
 

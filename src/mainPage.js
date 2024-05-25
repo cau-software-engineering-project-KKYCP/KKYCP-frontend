@@ -44,10 +44,9 @@ function displayProjects() {
 
     // URL 파라미터에서 선택된 프로젝트를 가져와 설정
     const urlParams = new URLSearchParams(window.location.search);
-    const selectedProject = urlParams.get('project');
-    if (selectedProject) {
-        projectSelect.value = selectedProject;
-        currentProject = selectedProject;
+    const selectedProjectId = urlParams.get('projectId');
+    if (selectedProjectId) {
+        currentProject = selectedProjectId;
     } else {
         currentProject = projects.length > 0 ? projects[0].name : null;
     }
@@ -59,74 +58,94 @@ function displayProjects() {
 }
 
 // 선택된 프로젝트의 이슈 데이터를 백엔드에서 불러오는 함수
-async function fetchIssues(projectName) {
+async function fetchIssues(projectId) {
     // 실제 API 호출 코드로 교체 필요
-    // 예시: const response = await fetch(`/api/issues?project=${projectName}`);
+    // 예시: const response = await fetch(`/api/issues?project=${projectId}`);
     // const data = await response.json();
+    if(projectId){
+        fetch(`api/project/${projectId}/issues?=offset=${currentPage-1}&limit=${20}`,{
+            method: 'GET',
+            headers:{
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response=>{
+            if (response.status == 200){
+                return response.json();
+            } else{
+                throw new Error('There are error browsing issues');
+            }
+        })
+        .then(data =>{
+            console.log('Issues browsing completed', data)
+            sampleIssues[projectId] = data[projectId] || [];
+            totalPages = Math.ceil(sampleIssues[projectId].length / issuesPerPage);
+            displayIssues(sampleIssues[projectId], currentPage);
+        })
+    }
+
     const data = {
-        'Project 1': [
+        1: [
             { title: 'Sample Issue 1', description: 'Description for Sample Issue 1', reporter: 'tester1', assignee: 'dev1', priority: 'major', status: 'new', reportedDate: '2024-05-18', type: 'Bug', comments: [] },
             { title: 'Sample Issue 2', description: 'Description for Sample Issue 2', reporter: 'tester2', assignee: 'dev2', priority: 'critical', status: 'assigned', reportedDate: '2024-05-18', type: 'Feature', comments: [] }
         ],
-        'Project 2': [
+        2: [
             { title: 'Project 2 Issue 1', description: 'Description for Project 2 Issue 1', reporter: 'user1', assignee: 'dev1', priority: 'major', status: 'new', reportedDate: '2024-05-10', type: 'Bug', comments: [] }
         ],
-        'Project 3': [
+        3: [
             { title: 'Project 3 Issue 1', description: 'Description for Project 3 Issue 1', reporter: 'user3', assignee: 'dev3', priority: 'minor', status: 'resolved', reportedDate: '2024-05-08', type: 'Docs', comments: [] }
         ],
-        'Project 4': [
+        4: [
             { title: 'Project 4 Issue 1', description: 'Description for Project 4 Issue 1', reporter: 'user4', assignee: 'dev4', priority: 'major', status: 'new', reportedDate: '2024-05-18', type: 'Bug', comments: [] }
         ],
-        'Project 5': [
+        5: [
             { title: 'Project 5 Issue 1', description: 'Description for Project 5 Issue 1', reporter: 'user5', assignee: 'dev5', priority: 'critical', status: 'assigned', reportedDate: '2024-05-19', type: 'Feature', comments: [] }
         ],
-        'Project 6': [
+        6: [
             { title: 'Project 6 Issue 1', description: 'Description for Project 6 Issue 1', reporter: 'user6', assignee: 'dev6', priority: 'minor', status: 'resolved', reportedDate: '2024-05-20', type: 'Docs', comments: [] }
         ]
     };
-    sampleIssues[projectName] = data[projectName] || [];
-    totalPages = Math.ceil(sampleIssues[projectName].length / issuesPerPage);
-    displayIssues(sampleIssues[projectName], currentPage);
+    
 }
 
 // 선택된 프로젝트의 참여 유저 데이터를 백엔드에서 불러오는 함수
-async function fetchProjectUsers(projectName) {
+async function fetchProjectUsers(projectId) {
     // 실제 API 호출 코드로 교체 필요
-    // 예시: const response = await fetch(`/api/projects/${projectName}/users`);
+    // 예시: const response = await fetch(`/api/projects/${projectId}/users`);
     // const data = await response.json();
     const data = {
-        'Project 1': [
+        1: [
             { id: 'user1', nickname: 'User One', role: 'PL' },
             { id: 'user2', nickname: 'User Two', role: 'dev' },
             { id: 'user3', nickname: 'User Three', role: 'tester' }
         ],
-        'Project 2': [
+        2: [
             { id: 'user4', nickname: 'User Four', role: 'dev' },
             { id: 'user5', nickname: 'User Five', role: 'PL' },
             { id: 'user6', nickname: 'User Six', role: 'tester' }
         ],
-        'Project 3': [
+        3: [
             { id: 'user7', nickname: 'User Seven', role: 'dev' },
             { id: 'user8', nickname: 'User Eight', role: 'PL' },
             { id: 'user9', nickname: 'User Nine', role: 'tester' }
         ],
-        'Project 4': [
+        4: [
             { id: 'user10', nickname: 'User Ten', role: 'PL' },
             { id: 'user11', nickname: 'User Eleven', role: 'dev' },
             { id: 'user12', nickname: 'User Twelve', role: 'tester' }
         ],
-        'Project 5': [
+        5: [
             { id: 'user13', nickname: 'User Thirteen', role: 'PL' },
             { id: 'user14', nickname: 'User Fourteen', role: 'dev' },
             { id: 'user15', nickname: 'User Fifteen', role: 'tester' }
         ],
-        'Project 6': [
+        6: [
             { id: 'user16', nickname: 'User Sixteen', role: 'PL' },
             { id: 'user17', nickname: 'User Seventeen', role: 'dev' },
             { id: 'user18', nickname: 'User Eighteen', role: 'tester' }
         ]
     };
-    projectUsers[projectName] = data[projectName] || [];
+    projectUsers[projectId] = data[projectId] || [];
 }
 
 // 프로젝트 변경 시 호출되는 함수

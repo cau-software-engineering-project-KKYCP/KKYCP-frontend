@@ -5,24 +5,24 @@
 // 3. 프론트엔드에서 해당 API를 호출하여 데이터를 받아와야 합니다.
 // 예시 API 엔드포인트: GET /api/projects/{projectId}/users
 const projectUserData = {
-    'Project 1': [
+    1: [
         { id: 'user1', nickname: 'User One', role: 'PL' },
         { id: 'user2', nickname: 'User Two', role: 'dev' },
         { id: 'user3', nickname: 'User Three', role: 'tester' },
     ],
-    'Project 2': [
+    2: [
         { id: 'user4', nickname: 'User Four', role: 'dev' },
         { id: 'user5', nickname: 'User Five', role: 'PL' },
         { id: 'user6', nickname: 'User Six', role: 'tester' },
     ],
-    'Project 3': [
+    3: [
         { id: 'user7', nickname: 'User Seven', role: 'dev' },
         { id: 'user8', nickname: 'User Eight', role: 'PL' },
         { id: 'user9', nickname: 'User Nine', role: 'tester' },
     ]
 };
 
-let currentProject = null;
+let currentProjectId = null;
 let filteredUsers = [];
 let currentEditUser = null;
 const usersPerPage = 20;
@@ -31,8 +31,8 @@ let totalUserPages = 1;
 
 // URL 파라미터에서 프로젝트 이름 가져오기
 const urlParams = new URLSearchParams(window.location.search);
-currentProject = urlParams.get('project');
-filteredUsers = projectUserData[currentProject] || [];
+currentProjectId = urlParams.get('projectId');
+filteredUsers = projectUserData[currentProjectId] || [];
 totalUserPages = Math.ceil(filteredUsers.length / usersPerPage);
 
 // 유저 리스트를 화면에 표시하는 함수
@@ -66,9 +66,9 @@ function displayUsers(users, page) {
 function filterUsers() {
     const roleFilter = document.getElementById('roleFilter').value;
     if (roleFilter === '') {
-        filteredUsers = projectUserData[currentProject];
+        filteredUsers = projectUserData[currentProjectId];
     } else {
-        filteredUsers = projectUserData[currentProject].filter(user => user.role === roleFilter);
+        filteredUsers = projectUserData[currentProjectId].filter(user => user.role === roleFilter);
     }
     totalUserPages = Math.ceil(filteredUsers.length / usersPerPage);
     displayUsers(filteredUsers, 1);
@@ -122,7 +122,7 @@ function closeAddUserModal() {
 // 3. 프론트엔드에서 해당 API를 호출하여 데이터를 받아와야 합니다.
 // 예시 API 엔드포인트: GET /api/users
 const allUsers = [
-    { id: 'user1', nickname: 'User One', participated: ['Project 1'] },
+    { id: 'test', nickname: 'test', participated: ['Project 1'] },
     { id: 'user2', nickname: 'User Two', participated: ['Project 1'] },
     { id: 'user3', nickname: 'User Three', participated: ['Project 1'] },
     { id: 'user4', nickname: 'User Four', participated: ['Project 2'] },
@@ -218,12 +218,48 @@ function updateUserRole(index, role) {
 // 선택된 유저 저장 함수
 function saveAddedUsers() {
     // selectedUsers를 백엔드에 저장하는 로직 필요
-    closeAddUserModal();
+    for(const user of selectedUsers){
+        console.log(user.nickname)
+        console.log(selectedUsers)
+        fetch(`/api/project/${currentProjectId}/users`,{
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json;charset=UTF-8'
+            },
+            body: JSON.stringify({
+                username: user.nickname
+            })
+        })
+        .then(response =>{
+            if(response.status == 200){
+                projectUserData[currentProjectId].push(user);
+            }
+            else if(response.status === 404){
+                
+                throw new Error('User Added Failed: The project id is not exists.');
+            }
+            else{
+                throw new Error('Unknown Error Occured');
+            }
+        })
+        .then(response=>{
+            closeAddUserModal();
+            filterUsers();
+        })
+        .catch(error =>{
+            console.error(error.message);
+            alert(error.message);
+        })
+    }
+
+    
     // 화면 갱신
+    /*
     selectedUsers.forEach(user => {
         projectUserData[currentProject].push(user);
     });
-    filterUsers();
+    */
+    
 }
 
 // 페이지네이션 업데이트 함수
@@ -258,7 +294,7 @@ function changePage(page, items, paginationId) {
 
 // 초기 유저 리스트 표시
 document.addEventListener('DOMContentLoaded', function () {
-    document.querySelector('header h1').textContent = `User List for ${currentProject}`;
+    document.querySelector('header h1').textContent = `User List for projectId : ${currentProjectId}`;
     filterUsers();
     displayAllUsers(allUsers, 1);
 });
