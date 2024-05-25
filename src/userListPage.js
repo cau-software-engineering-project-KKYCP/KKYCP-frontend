@@ -4,7 +4,8 @@
 // 2. 조회된 유저 정보를 JSON 형식으로 프론트엔드에 반환하는 API를 구현합니다.
 // 3. 프론트엔드에서 해당 API를 호출하여 데이터를 받아와야 합니다.
 // 예시 API 엔드포인트: GET /api/projects/{projectId}/users
-const projectUserData = {
+const projectUserData = [];
+    /*
     1: [
         { id: 'user1', nickname: 'User One', role: 'PL' },
         { id: 'user2', nickname: 'User Two', role: 'dev' },
@@ -20,7 +21,8 @@ const projectUserData = {
         { id: 'user8', nickname: 'User Eight', role: 'PL' },
         { id: 'user9', nickname: 'User Nine', role: 'tester' },
     ]
-};
+    */
+
 
 let currentProjectId = null;
 let filteredUsers = [];
@@ -66,7 +68,8 @@ function displayUsers(users, page) {
 function filterUsers() {
     const roleFilter = document.getElementById('roleFilter').value;
     if (roleFilter === '') {
-        filteredUsers = projectUserData[currentProjectId];
+        filteredUsers = projectUserData;
+        console.log(filteredUsers);
     } else {
         filteredUsers = projectUserData[currentProjectId].filter(user => user.role === roleFilter);
     }
@@ -92,8 +95,25 @@ function closeEditUserModal() {
 function saveEditUser() {
     if (currentEditUser) {
         currentEditUser.role = document.getElementById('editUserRole').value;
-        displayUsers(filteredUsers, currentUserPage);
-        closeEditUserModal();
+        let Userrole = currentEditUser.role;
+        Userrole.toString();
+        console.log(Userrole);
+        fetch(`/api/project/${currentProjectId}/privileges?username=${currentEditUser.nickname}`,{
+            method:'PUT',
+            headers:{
+                'Content-Type': 'application/json;charset=UTF-8'
+            },
+            body: JSON.stringify([Userrole])
+        })
+        .then(response=>{
+            if(response.status == 200){
+                console.log('유저 권한 수정 성공');
+                displayUsers(filteredUsers, currentUserPage);
+                closeEditUserModal();
+            } else{
+                throw new Error('User privileges change occur error');
+            }
+        })
     }
 }
 
@@ -113,6 +133,7 @@ function openAddUserModal() {
 // 새로운 유저 추가 모달 닫기
 function closeAddUserModal() {
     document.getElementById('addUserModal').style.display = 'none';
+    selectedUsers = [];
 }
 
 // 모든 유저 데이터 (샘플)
@@ -122,6 +143,7 @@ function closeAddUserModal() {
 // 3. 프론트엔드에서 해당 API를 호출하여 데이터를 받아와야 합니다.
 // 예시 API 엔드포인트: GET /api/users
 const allUsers = [
+    /*
     { id: 'test', nickname: 'test', participated: ['Project 1'] },
     { id: 'user2', nickname: 'User Two', participated: ['Project 1'] },
     { id: 'user3', nickname: 'User Three', participated: ['Project 1'] },
@@ -147,12 +169,13 @@ const allUsers = [
     { id: 'user23', nickname: 'User Twenty-Three', participated: [] },
     { id: 'user24', nickname: 'User Twenty-Four', participated: [] },
     { id: 'user25', nickname: 'User Twenty-Five', participated: [] }
+    */
 ];
 
 let totalAllUserPages = Math.ceil(allUsers.length / usersPerPage);
 
 // 선택된 유저 데이터 (샘플)
-const selectedUsers = [];
+let selectedUsers = [];
 
 // 모든 유저 리스트를 화면에 표시하는 함수
 function displayAllUsers(users, page) {
@@ -176,6 +199,7 @@ function displayAllUsers(users, page) {
     });
 
     updatePagination(users, page, 'all-user-pagination');
+    console.log('디스플레이 끝');
 }
 
 // 선택된 유저 리스트를 화면에 표시하는 함수
@@ -202,12 +226,40 @@ function displaySelectedUsers() {
 }
 
 // 유저 추가 함수
-function addUser(index) {
-    const user = allUsers[index];
-    if (!selectedUsers.find(u => u.id === user.id)) {
-        selectedUsers.push({ ...user, role: 'PL' }); // 기본 역할 PL로 추가
+function addUser() {
+    let nameInput = document.getElementById('usernameInput')
+    if(nameInput){
+        let usernameInput = nameInput.value
+        selectedUsers.push({nickname:usernameInput, role:'PL'});
         displaySelectedUsers();
     }
+        /*
+        console.log('addUser 테스트중', usernameInput)
+        fetch(`api/project/${currentProjectId}/users?username=${usernameInput}`, {
+            method:'GET'
+        })
+        .then(response=>{
+            if(response.status == 200){
+                return response.json();
+            } else{
+                throw new Error('There are error find a user');
+            }
+        })
+        .then(data=>{
+            console.log('A User Finded', data);
+            let findusername = data[0];
+            selectedUsers.push({nickname:findusername, role: 'PL'});// 기본 역할 PL로 추가
+            displaySelectedUsers();
+        })
+    }
+    */
+    /*
+    const user = allUsers[index];
+    if (!selectedUsers.find(u => u.id === user.id)) {
+        selectedUsers.push({ ...user, role: 'PL' }); 
+        displaySelectedUsers();
+    }
+    */
 }
 
 // 유저 역할 업데이트 함수
@@ -218,7 +270,7 @@ function updateUserRole(index, role) {
 // 선택된 유저 저장 함수
 function saveAddedUsers() {
     // selectedUsers를 백엔드에 저장하는 로직 필요
-    for(const user of selectedUsers){
+    for(let user of selectedUsers){
         console.log(user.nickname)
         console.log(selectedUsers)
         fetch(`/api/project/${currentProjectId}/users`,{
@@ -232,7 +284,10 @@ function saveAddedUsers() {
         })
         .then(response =>{
             if(response.status == 200){
-                projectUserData[currentProjectId].push(user);
+                console.log(user);
+                projectUserData.push(user);
+                closeAddUserModal();
+                filterUsers();
             }
             else if(response.status === 404){
                 
@@ -241,10 +296,6 @@ function saveAddedUsers() {
             else{
                 throw new Error('Unknown Error Occured');
             }
-        })
-        .then(response=>{
-            closeAddUserModal();
-            filterUsers();
         })
         .catch(error =>{
             console.error(error.message);
@@ -295,6 +346,27 @@ function changePage(page, items, paginationId) {
 // 초기 유저 리스트 표시
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelector('header h1').textContent = `User List for projectId : ${currentProjectId}`;
-    filterUsers();
-    displayAllUsers(allUsers, 1);
+    fetch(`api/project/${currentProjectId}/users`,{
+        method:'GET'
+    })
+    .then(response=>{
+        if(response.status ==200){
+            return response.json();
+        }
+        else{
+            throw new Error('There are error browsing all users');
+        }
+    })
+    .then(data =>{
+        console.log('All Users browsing completed', data);
+        data.forEach(user=>{
+            projectUserData.push({nickname : user.username}); 
+        });
+        filterUsers();
+        displayAllUsers(projectUserData, 1);
+        console.log('added completed', projectUserData);
+    })
+    .catch(error=>{
+        console.error('Error',error);
+    });
 });

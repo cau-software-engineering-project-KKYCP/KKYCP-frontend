@@ -215,9 +215,10 @@
                 <p><strong>Nickname:</strong> <span id="editUserNickname"></span></p>
                 <label for="editUserRole">Role</label>
                 <select id="editUserRole">
-                    <option value="PL">PL</option>
-                    <option value="dev">dev</option>
-                    <option value="tester">tester</option>
+                    <option value="PARTICIPANT">PARTICIPANT</option>
+                    <option value="TRIAGER">TRIAGER</option>
+                    <option value="VERIFIER">VERIFIER</option>
+                    <option value="REPORTER">REPORTER</option>
                 </select>
             </div>
             <div class="modal-footer">
@@ -235,20 +236,11 @@
             </div>
             <div class="modal-body">
                 <div style="max-height: 300px; overflow-y: auto;">
-                    <table class="user-list">
-                        <thead>
-                            <tr>
-                                <th>No.</th>
-                                <th>ID</th>
-                                <th>Nickname</< /th>
-                                <th>Participated</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="all-user-table-body">
-                            <!-- All user rows will be inserted here dynamically -->
-                        </tbody>
-                    </table>
+                   <h2>Input username</h2>
+                </div>
+                <div>
+                    <input type="text" id="usernameInput" name="username">
+                    <button onclick="addUser()">Add User</button>
                 </div>
                 <div class="pagination" id="all-user-pagination">
                     <!-- Pagination buttons will be inserted here dynamically -->
