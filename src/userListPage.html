@@ -177,9 +177,10 @@
             <label for="roleFilter">Filter by Authorization:</label>
             <select id="roleFilter" onchange="filterUsers()">
                 <option value="">None</option>
-                <option value="PL">PL</option>
-                <option value="dev">dev</option>
-                <option value="tester">tester</option>
+                <option value="REPORTER">REPORTER</option>
+                <option value="TRIAGER">TRIAGER</option>
+                <option value="TESTER">TESTER</option>
+                <option value="VERIFIER">VERIFIER</option>
             </select>
         </div>
         <div class="add-user-btn">
@@ -215,10 +216,10 @@
                 <p><strong>Nickname:</strong> <span id="editUserNickname"></span></p>
                 <label for="editUserRole">Role</label>
                 <select id="editUserRole">
-                    <option value="PARTICIPANT">PARTICIPANT</option>
-                    <option value="TRIAGER">TRIAGER</option>
-                    <option value="VERIFIER">VERIFIER</option>
                     <option value="REPORTER">REPORTER</option>
+                    <option value="TRIAGER">TRIAGER</option>
+                    <option value="TESTER">TESTER</option>
+                    <option value="VERIFIER">VERIFIER</option>
                 </select>
             </div>
             <div class="modal-footer">

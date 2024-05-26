@@ -71,7 +71,7 @@ function filterUsers() {
         filteredUsers = projectUserData;
         console.log(filteredUsers);
     } else {
-        filteredUsers = projectUserData[currentProjectId].filter(user => user.role === roleFilter);
+        filteredUsers = projectUserData.filter(user => user.role === roleFilter);
     }
     totalUserPages = Math.ceil(filteredUsers.length / usersPerPage);
     displayUsers(filteredUsers, 1);
@@ -94,8 +94,9 @@ function closeEditUserModal() {
 // 유저 편집 내용을 저장하는 함수
 function saveEditUser() {
     if (currentEditUser) {
-        currentEditUser.role = document.getElementById('editUserRole').value;
-        let Userrole = currentEditUser.role;
+        let Userrole = document.getElementById('editUserRole').value;
+        let newRoles = document.getElementById('editUserRole').value.split(',');
+        currentEditUser.role = [currentEditUser.role[0]].concat(newRoles);
         Userrole.toString();
         console.log(Userrole);
         fetch(`/api/project/${currentProjectId}/privileges?username=${currentEditUser.nickname}`,{
@@ -108,7 +109,7 @@ function saveEditUser() {
         .then(response=>{
             if(response.status == 200){
                 console.log('유저 권한 수정 성공');
-                displayUsers(filteredUsers, currentUserPage);
+                filterUsers();
                 closeEditUserModal();
             } else{
                 throw new Error('User privileges change occur error');
@@ -132,8 +133,8 @@ function openAddUserModal() {
 
 // 새로운 유저 추가 모달 닫기
 function closeAddUserModal() {
-    document.getElementById('addUserModal').style.display = 'none';
     selectedUsers = [];
+    document.getElementById('addUserModal').style.display = 'none';
 }
 
 // 모든 유저 데이터 (샘플)
@@ -291,7 +292,7 @@ function saveAddedUsers() {
             }
             else if(response.status === 404){
                 
-                throw new Error('User Added Failed: The project id is not exists.');
+                throw new Error('User Added Failed: The project id is not exists or user is not exists.');
             }
             else{
                 throw new Error('Unknown Error Occured');
@@ -362,8 +363,32 @@ document.addEventListener('DOMContentLoaded', function () {
         data.forEach(user=>{
             projectUserData.push({nickname : user.username}); 
         });
-        filterUsers();
-        displayAllUsers(projectUserData, 1);
+        fetch(`api/project/${currentProjectId}/privileges`,{
+            method: 'GET',
+            headers:{
+                'Content-Type' : 'application/json;charset=UTF-8'
+            }
+        })
+        .then(response=>{
+            if(response.status == 200){
+                return response.json();
+            }
+            else{
+                throw new Error('There are error browsing users privileges');
+            }
+        })
+        .then(privilegesData=>{
+            console.log('Updated projectUserData with roles', privilegesData);
+            privilegesData.forEach(privilegeInfo =>{
+                let user = projectUserData.find(u => u.nickname === privilegeInfo.username);
+                if(user){
+                    user.role = privilegeInfo.privileges;
+                }
+            });
+            console.log('Updated projectUserData with roles', projectUserData);
+            filterUsers();
+            displayAllUsers(filteredUsers, 1);
+        })
         console.log('added completed', projectUserData);
     })
     .catch(error=>{
