@@ -5,23 +5,23 @@
 // 3. 프론트엔드에서 해당 API를 호출하여 데이터를 받아와야 합니다.
 // 예시 API 엔드포인트: GET /api/projects/{projectId}/users
 const projectUserData = [];
-    /*
-    1: [
-        { id: 'user1', nickname: 'User One', role: 'PL' },
-        { id: 'user2', nickname: 'User Two', role: 'dev' },
-        { id: 'user3', nickname: 'User Three', role: 'tester' },
-    ],
-    2: [
-        { id: 'user4', nickname: 'User Four', role: 'dev' },
-        { id: 'user5', nickname: 'User Five', role: 'PL' },
-        { id: 'user6', nickname: 'User Six', role: 'tester' },
-    ],
-    3: [
-        { id: 'user7', nickname: 'User Seven', role: 'dev' },
-        { id: 'user8', nickname: 'User Eight', role: 'PL' },
-        { id: 'user9', nickname: 'User Nine', role: 'tester' },
-    ]
-    */
+/*
+1: [
+    { id: 'user1', nickname: 'User One', role: 'PL' },
+    { id: 'user2', nickname: 'User Two', role: 'dev' },
+    { id: 'user3', nickname: 'User Three', role: 'tester' },
+],
+2: [
+    { id: 'user4', nickname: 'User Four', role: 'dev' },
+    { id: 'user5', nickname: 'User Five', role: 'PL' },
+    { id: 'user6', nickname: 'User Six', role: 'tester' },
+],
+3: [
+    { id: 'user7', nickname: 'User Seven', role: 'dev' },
+    { id: 'user8', nickname: 'User Eight', role: 'PL' },
+    { id: 'user9', nickname: 'User Nine', role: 'tester' },
+]
+*/
 
 
 let currentProjectId = null;
@@ -82,7 +82,29 @@ function editUser(index) {
     currentEditUser = filteredUsers[index];
     document.getElementById('editUserId').innerText = currentEditUser.id;
     document.getElementById('editUserNickname').innerText = currentEditUser.nickname;
-    document.getElementById('editUserRole').value = currentEditUser.role;
+
+    // 기존 역할 스피너 초기화
+    const roleContainer = document.getElementById('roleContainer');
+    roleContainer.innerHTML = '';
+
+    // 유저의 모든 역할을 스피너로 추가
+    const roles = currentEditUser.role.split(',');
+    roles.forEach(role => {
+        const newRoleSelect = document.createElement('select');
+        newRoleSelect.className = 'editUserRole';
+        newRoleSelect.innerHTML = `
+            <option value="REPORTER">REPORTER</option>
+            <option value="TRIAGER">TRIAGER</option>
+            <option value="TESTER">TESTER</option>
+            <option value="VERIFIER">VERIFIER</option>
+        `;
+        newRoleSelect.value = role;
+        roleContainer.appendChild(newRoleSelect);
+    });
+
+    // 기본 스피너 하나 추가
+    addRoleSpinner();
+
     document.getElementById('editUserModal').style.display = 'block';
 }
 
@@ -91,30 +113,52 @@ function closeEditUserModal() {
     document.getElementById('editUserModal').style.display = 'none';
 }
 
+// 역할 선택 스피너를 추가하는 함수
+function addRoleSpinner() {
+    const roleContainer = document.getElementById('roleContainer');
+    const newRoleSelect = document.createElement('select');
+    newRoleSelect.className = 'editUserRole';
+    newRoleSelect.innerHTML = `
+        <option value="REPORTER">REPORTER</option>
+        <option value="TRIAGER">TRIAGER</option>
+        <option value="TESTER">TESTER</option>
+        <option value="VERIFIER">VERIFIER</option>
+    `;
+    roleContainer.appendChild(newRoleSelect);
+}
+
 // 유저 편집 내용을 저장하는 함수
 function saveEditUser() {
     if (currentEditUser) {
-        let Userrole = document.getElementById('editUserRole').value;
-        let newRoles = document.getElementById('editUserRole').value.split(',');
-        currentEditUser.role = [currentEditUser.role[0]].concat(newRoles);
-        Userrole.toString();
-        console.log(Userrole);
-        fetch(`/api/project/${currentProjectId}/privileges?username=${currentEditUser.nickname}`,{
-            method:'PUT',
-            headers:{
+        const roleSelects = document.querySelectorAll('.editUserRole');
+        let selectedRoles = [];
+        roleSelects.forEach(select => {
+            if (select.value) {
+                selectedRoles.push(select.value);
+            }
+        });
+        currentEditUser.role = selectedRoles.join(',');
+
+        fetch(`/api/project/${currentProjectId}/privileges?username=${currentEditUser.nickname}`, {
+            method: 'PUT',
+            headers: {
                 'Content-Type': 'application/json;charset=UTF-8'
             },
-            body: JSON.stringify([Userrole])
+            body: JSON.stringify(selectedRoles)
         })
-        .then(response=>{
-            if(response.status == 200){
-                console.log('유저 권한 수정 성공');
-                filterUsers();
-                closeEditUserModal();
-            } else{
-                throw new Error('User privileges change occur error');
-            }
-        })
+            .then(response => {
+                if (response.status == 200) {
+                    console.log('유저 권한 수정 성공');
+                    filterUsers();
+                    closeEditUserModal();
+                } else {
+                    throw new Error('User privileges change occur error');
+                }
+            })
+            .catch(error => {
+                console.error(error.message);
+                alert(error.message);
+            });
     }
 }
 
@@ -229,31 +273,31 @@ function displaySelectedUsers() {
 // 유저 추가 함수
 function addUser() {
     let nameInput = document.getElementById('usernameInput')
-    if(nameInput){
+    if (nameInput) {
         let usernameInput = nameInput.value
-        selectedUsers.push({nickname:usernameInput, role:'PL'});
+        selectedUsers.push({ nickname: usernameInput, role: 'PL' });
         displaySelectedUsers();
     }
-        /*
-        console.log('addUser 테스트중', usernameInput)
-        fetch(`api/project/${currentProjectId}/users?username=${usernameInput}`, {
-            method:'GET'
-        })
-        .then(response=>{
-            if(response.status == 200){
-                return response.json();
-            } else{
-                throw new Error('There are error find a user');
-            }
-        })
-        .then(data=>{
-            console.log('A User Finded', data);
-            let findusername = data[0];
-            selectedUsers.push({nickname:findusername, role: 'PL'});// 기본 역할 PL로 추가
-            displaySelectedUsers();
-        })
-    }
-    */
+    /*
+    console.log('addUser 테스트중', usernameInput)
+    fetch(`api/project/${currentProjectId}/users?username=${usernameInput}`, {
+        method:'GET'
+    })
+    .then(response=>{
+        if(response.status == 200){
+            return response.json();
+        } else{
+            throw new Error('There are error find a user');
+        }
+    })
+    .then(data=>{
+        console.log('A User Finded', data);
+        let findusername = data[0];
+        selectedUsers.push({nickname:findusername, role: 'PL'});// 기본 역할 PL로 추가
+        displaySelectedUsers();
+    })
+}
+*/
     /*
     const user = allUsers[index];
     if (!selectedUsers.find(u => u.id === user.id)) {
@@ -271,10 +315,10 @@ function updateUserRole(index, role) {
 // 선택된 유저 저장 함수
 function saveAddedUsers() {
     // selectedUsers를 백엔드에 저장하는 로직 필요
-    for(let user of selectedUsers){
+    for (let user of selectedUsers) {
         console.log(user.nickname)
         console.log(selectedUsers)
-        fetch(`/api/project/${currentProjectId}/users`,{
+        fetch(`/api/project/${currentProjectId}/users`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json;charset=UTF-8'
@@ -283,35 +327,35 @@ function saveAddedUsers() {
                 username: user.nickname
             })
         })
-        .then(response =>{
-            if(response.status == 200){
-                console.log(user);
-                projectUserData.push(user);
-                closeAddUserModal();
-                filterUsers();
-            }
-            else if(response.status === 404){
-                
-                throw new Error('User Added Failed: The project id is not exists or user is not exists.');
-            }
-            else{
-                throw new Error('Unknown Error Occured');
-            }
-        })
-        .catch(error =>{
-            console.error(error.message);
-            alert(error.message);
-        })
+            .then(response => {
+                if (response.status == 200) {
+                    console.log(user);
+                    projectUserData.push(user);
+                    closeAddUserModal();
+                    filterUsers();
+                }
+                else if (response.status === 404) {
+
+                    throw new Error('User Added Failed: The project id is not exists or user is not exists.');
+                }
+                else {
+                    throw new Error('Unknown Error Occured');
+                }
+            })
+            .catch(error => {
+                console.error(error.message);
+                alert(error.message);
+            })
     }
 
-    
+
     // 화면 갱신
     /*
     selectedUsers.forEach(user => {
         projectUserData[currentProject].push(user);
     });
     */
-    
+
 }
 
 // 페이지네이션 업데이트 함수
@@ -347,51 +391,51 @@ function changePage(page, items, paginationId) {
 // 초기 유저 리스트 표시
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelector('header h1').textContent = `User List for projectId : ${currentProjectId}`;
-    fetch(`api/project/${currentProjectId}/users`,{
-        method:'GET'
+    fetch(`api/project/${currentProjectId}/users`, {
+        method: 'GET'
     })
-    .then(response=>{
-        if(response.status ==200){
-            return response.json();
-        }
-        else{
-            throw new Error('There are error browsing all users');
-        }
-    })
-    .then(data =>{
-        console.log('All Users browsing completed', data);
-        data.forEach(user=>{
-            projectUserData.push({nickname : user.username}); 
-        });
-        fetch(`api/project/${currentProjectId}/privileges`,{
-            method: 'GET',
-            headers:{
-                'Content-Type' : 'application/json;charset=UTF-8'
-            }
-        })
-        .then(response=>{
-            if(response.status == 200){
+        .then(response => {
+            if (response.status == 200) {
                 return response.json();
             }
-            else{
-                throw new Error('There are error browsing users privileges');
+            else {
+                throw new Error('There are error browsing all users');
             }
         })
-        .then(privilegesData=>{
-            console.log('Updated projectUserData with roles', privilegesData);
-            privilegesData.forEach(privilegeInfo =>{
-                let user = projectUserData.find(u => u.nickname === privilegeInfo.username);
-                if(user){
-                    user.role = privilegeInfo.privileges;
-                }
+        .then(data => {
+            console.log('All Users browsing completed', data);
+            data.forEach(user => {
+                projectUserData.push({ nickname: user.username });
             });
-            console.log('Updated projectUserData with roles', projectUserData);
-            filterUsers();
-            displayAllUsers(filteredUsers, 1);
+            fetch(`api/project/${currentProjectId}/privileges`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json;charset=UTF-8'
+                }
+            })
+                .then(response => {
+                    if (response.status == 200) {
+                        return response.json();
+                    }
+                    else {
+                        throw new Error('There are error browsing users privileges');
+                    }
+                })
+                .then(privilegesData => {
+                    console.log('Updated projectUserData with roles', privilegesData);
+                    privilegesData.forEach(privilegeInfo => {
+                        let user = projectUserData.find(u => u.nickname === privilegeInfo.username);
+                        if (user) {
+                            user.role = privilegeInfo.privileges;
+                        }
+                    });
+                    console.log('Updated projectUserData with roles', projectUserData);
+                    filterUsers();
+                    displayAllUsers(filteredUsers, 1);
+                })
+            console.log('added completed', projectUserData);
         })
-        console.log('added completed', projectUserData);
-    })
-    .catch(error=>{
-        console.error('Error',error);
-    });
+        .catch(error => {
+            console.error('Error', error);
+        });
 });
