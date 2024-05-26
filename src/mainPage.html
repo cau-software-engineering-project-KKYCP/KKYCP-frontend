@@ -276,8 +276,12 @@
     </header>
     <div class="container">
         <div class="search-bar">
+            <input type="text" id="titleSearch" placeholder="Search by title..."
+                onkeypress="handleTitleKeyPress(event)">
+            <button class="btn" onclick="searchByTitle()">Search Title</button>
+        </div>
+        <div class="search-bar">
             <select id="searchOption">
-                <option value="title">Title</option>
                 <option value="reporter">Reporter</option>
                 <option value="assignee">Assignee</option>
                 <option value="type">Type</option>

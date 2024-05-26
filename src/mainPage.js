@@ -62,26 +62,26 @@ async function fetchIssues(projectId) {
     // 실제 API 호출 코드로 교체 필요
     // 예시: const response = await fetch(`/api/issues?project=${projectId}`);
     // const data = await response.json();
-    if(projectId){
-        fetch(`api/project/${projectId}/issues?=offset=${currentPage-1}&limit=${20}`,{
+    if (projectId) {
+        fetch(`api/project/${projectId}/issues?=offset=${currentPage - 1}&limit=${20}`, {
             method: 'GET',
-            headers:{
+            headers: {
                 'Content-Type': 'application/json'
             }
         })
-        .then(response=>{
-            if (response.status == 200){
-                return response.json();
-            } else{
-                throw new Error('There are error browsing issues');
-            }
-        })
-        .then(data =>{
-            console.log('Issues browsing completed', data)
-            sampleIssues[projectId] = data[projectId] || [];
-            totalPages = Math.ceil(sampleIssues[projectId].length / issuesPerPage);
-            displayIssues(sampleIssues[projectId], currentPage);
-        })
+            .then(response => {
+                if (response.status == 200) {
+                    return response.json();
+                } else {
+                    throw new Error('There are error browsing issues');
+                }
+            })
+            .then(data => {
+                console.log('Issues browsing completed', data)
+                sampleIssues[projectId] = data[projectId] || [];
+                totalPages = Math.ceil(sampleIssues[projectId].length / issuesPerPage);
+                displayIssues(sampleIssues[projectId], currentPage);
+            })
     }
 
     const data = {
@@ -105,7 +105,7 @@ async function fetchIssues(projectId) {
             { title: 'Project 6 Issue 1', description: 'Description for Project 6 Issue 1', reporter: 'user6', assignee: 'dev6', priority: 'minor', status: 'resolved', reportedDate: '2024-05-20', type: 'Docs', comments: [] }
         ]
     };
-    
+
 }
 
 // 선택된 프로젝트의 참여 유저 데이터를 백엔드에서 불러오는 함수
@@ -230,6 +230,17 @@ function searchIssues() {
     displayIssues(filteredIssues, currentPage);
 }
 
+// 타이틀로 검색하는 함수
+function searchByTitle() {
+    const searchQuery = document.getElementById('titleSearch').value.toLowerCase();
+    const filteredIssues = sampleIssues[currentProject].filter(issue =>
+        issue.title.toLowerCase().includes(searchQuery)
+    );
+    totalPages = Math.ceil(filteredIssues.length / issuesPerPage);
+    currentPage = 1;
+    displayIssues(filteredIssues, currentPage);
+}
+
 // 필터링된 이슈를 화면에 표시하는 함수
 function filterIssues() {
     const priorityFilter = document.getElementById('priorityFilter').value;
@@ -256,6 +267,13 @@ function filterIssues() {
 function handleKeyPress(event) {
     if (event.key === 'Enter') {
         searchIssues();
+    }
+}
+
+// 엔터 키 입력 시 타이틀 검색 함수 호출
+function handleTitleKeyPress(event) {
+    if (event.key === 'Enter') {
+        searchByTitle();
     }
 }
 
