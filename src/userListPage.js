@@ -83,13 +83,14 @@ function editUser(index) {
     document.getElementById('editUserId').innerText = currentEditUser.id;
     document.getElementById('editUserNickname').innerText = currentEditUser.nickname;
 
+    console.log(currentEditUser.role);
     // 기존 역할 스피너 초기화
     const roleContainer = document.getElementById('roleContainer');
     roleContainer.innerHTML = '';
 
-    // 유저의 모든 역할을 스피너로 추가
-    const roles = currentEditUser.role.split(',');
-    roles.forEach(role => {
+    // 유저의 모든 역할을 스피너로 추가 (첫 번째 역할 PARTICIPANT는 제외)
+    const roles = currentEditUser.role;
+    roles.slice(1).forEach(role => {
         const newRoleSelect = document.createElement('select');
         newRoleSelect.className = 'editUserRole';
         newRoleSelect.innerHTML = `
@@ -102,8 +103,10 @@ function editUser(index) {
         roleContainer.appendChild(newRoleSelect);
     });
 
-    // 기본 스피너 하나 추가
-    addRoleSpinner();
+    if (roles.length === 0) {
+        // 기본 스피너 하나 추가 (유저 역할이 없을 때만)
+        addRoleSpinner();
+    }
 
     document.getElementById('editUserModal').style.display = 'block';
 }
@@ -127,6 +130,15 @@ function addRoleSpinner() {
     roleContainer.appendChild(newRoleSelect);
 }
 
+// 역할 선택 스피너를 삭제하는 함수
+function removeRoleSpinner() {
+    const roleContainer = document.getElementById('roleContainer');
+    const lastRoleSelect = roleContainer.querySelector('select:last-of-type');
+    if (lastRoleSelect) {
+        roleContainer.removeChild(lastRoleSelect);
+    }
+}
+
 // 유저 편집 내용을 저장하는 함수
 function saveEditUser() {
     if (currentEditUser) {
@@ -137,7 +149,12 @@ function saveEditUser() {
                 selectedRoles.push(select.value);
             }
         });
-        currentEditUser.role = selectedRoles.join(',');
+        // 첫 번째 요소(PARTICIPANT) 보존하고, 두 번째 요소부터 selectedRoles로 대체
+        if (currentEditUser.role && currentEditUser.role.length > 0) {
+            currentEditUser.role = [currentEditUser.role[0], ...selectedRoles];
+        } else {
+            currentEditUser.role = selectedRoles;
+        }
 
         fetch(`/api/project/${currentProjectId}/privileges?username=${currentEditUser.nickname}`, {
             method: 'PUT',
@@ -275,7 +292,7 @@ function addUser() {
     let nameInput = document.getElementById('usernameInput')
     if (nameInput) {
         let usernameInput = nameInput.value
-        selectedUsers.push({ nickname: usernameInput, role: 'PL' });
+        selectedUsers.push({ nickname: usernameInput, role: 'PARTICIPANT' });
         displaySelectedUsers();
     }
     /*

@@ -1,5 +1,5 @@
 // DB에서 불러온 프로젝트 데이터로 초기화할 변수들
-let sampleIssues = {}; // 각 프로젝트의 이슈 데이터를 저장하는 객체
+let sampleIssues = []; // 각 프로젝트의 이슈 데이터를 저장하는 객체
 let projects = []; // 프로젝트 목록
 let projectUsers = {}; // 프로젝트별 참여 유저 데이터
 
@@ -18,6 +18,7 @@ async function fetchProjects() {
     // 실제 API 호출 코드로 교체 필요
     // 예시: const response = await fetch('/api/projects');
     // const data = await response.json();
+    /*
     const data = [
         { name: 'Project 1', description: 'Description for Project 1', createdDate: '2024-01-01', createdBy: 'Admin 1' },
         { name: 'Project 2', description: 'Description for Project 2', createdDate: '2024-02-01', createdBy: 'Admin 2' },
@@ -26,8 +27,9 @@ async function fetchProjects() {
         { name: 'Project 5', description: 'Description for Project 5', createdDate: '2024-05-01', createdBy: 'Admin 5' },
         { name: 'Project 6', description: 'Description for Project 6', createdDate: '2024-06-01', createdBy: 'Admin 6' }
     ];
-    projects = data;
-    displayProjects();
+    */
+    //projects = data;
+    //displayProjects();
 }
 
 // 프로젝트 목록을 드롭다운에 표시하는 함수
@@ -78,12 +80,13 @@ async function fetchIssues(projectId) {
             })
             .then(data => {
                 console.log('Issues browsing completed', data)
-                sampleIssues[projectId] = data[projectId] || [];
-                totalPages = Math.ceil(sampleIssues[projectId].length / issuesPerPage);
-                displayIssues(sampleIssues[projectId], currentPage);
+                sampleIssues = data;
+                totalPages = Math.ceil(sampleIssues.length / issuesPerPage);
+                console.log('sampleIssues', sampleIssues);
+                displayIssues(sampleIssues, currentPage);
             })
     }
-
+    /*
     const data = {
         1: [
             { title: 'Sample Issue 1', description: 'Description for Sample Issue 1', reporter: 'tester1', assignee: 'dev1', priority: 'major', status: 'new', reportedDate: '2024-05-18', type: 'Bug', comments: [] },
@@ -105,7 +108,7 @@ async function fetchIssues(projectId) {
             { title: 'Project 6 Issue 1', description: 'Description for Project 6 Issue 1', reporter: 'user6', assignee: 'dev6', priority: 'minor', status: 'resolved', reportedDate: '2024-05-20', type: 'Docs', comments: [] }
         ]
     };
-
+    */
 }
 
 // 선택된 프로젝트의 참여 유저 데이터를 백엔드에서 불러오는 함수
@@ -171,6 +174,7 @@ function displayIssues(issues, page) {
         const paginatedIssues = issues.slice(start, end);
 
         paginatedIssues.forEach((issue, index) => {
+            console.log('issue check',issue);
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${start + index + 1}</td>
@@ -180,11 +184,11 @@ function displayIssues(issues, page) {
                 <td>${issue.priority}</td>
                 <td>${issue.status}</td>
                 <td>${issue.type}</td>
-                <td>${issue.reportedDate}</td>
+                <td>${issue.reported_date}</td>
                 <td>
-                    <button class="btn" onclick="viewIssue('${issue.title}')">View</button>
-                    <button class="btn" onclick="editIssue('${issue.title}')">Edit</button>
-                    <button class="btn" onclick="deleteIssue('${issue.title}')">Del</button>
+                    <button class="btn" onclick="viewIssue(${issue.id})">View</button>
+                    <button class="btn" onclick="editIssue(${issue.id})">Edit</button>
+                    <button class="btn" onclick="deleteIssue(${issue.id})">Del</button>
                 </td>
             `;
             issueTableBody.appendChild(row);
@@ -303,34 +307,68 @@ function saveCreateIssue() {
     const priority = document.getElementById('createPriority').value;
     const status = document.getElementById('createStatus').value;
     const type = document.getElementById('createType').value;
-    const reportedDate = new Date().toISOString().split('T')[0];
+    const reported_date = new Date().toISOString().split('T')[0];
     const reporter = loggedInUser;
 
     if (title && description) {
-        const newIssue = { title, description, reporter, assignee, priority, status, reportedDate, type, comments: [] };
-        sampleIssues[currentProject].push(newIssue);
-        // 새로운 이슈를 백엔드에 저장하는 로직이 추가되어야 합니다.
-        totalPages = Math.ceil(sampleIssues[currentProject].length / issuesPerPage);
-        displayIssues(sampleIssues[currentProject], currentPage);
-        closeCreateIssueModal();
+        const newIssue = { title, description, reporter, assignee, priority, status, reported_date, type, comments: [] };
+        fetch(`api/project/${currentProject}/issues`,{
+            method : 'POST',
+            headers:{
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title : title,
+                description : description,
+                priority : priority,
+                type : type
+            })
+        })
+        .then(response=>{
+            if (response.status == 201){
+                console.log(response);
+                const newIssue = { title, description, reporter, assignee, priority, status, reported_date, type, comments: [] };
+                sampleIssues.push(newIssue);
+                // 새로운 이슈를 백엔드에 저장하는 로직이 추가되어야 합니다.
+                totalPages = Math.ceil(sampleIssues.length / issuesPerPage);
+                displayIssues(sampleIssues, currentPage);
+                closeCreateIssueModal();
+            } else {
+                throw new Error('An error occured while saveCreateIssues');
+            }
+        })
     }
 }
 
 // 이슈를 조회하는 함수
-function viewIssue(title) {
-    currentViewIssue = sampleIssues[currentProject].find(issue => issue.title === title);
-    if (currentViewIssue) {
-        document.getElementById('viewModalTitle').innerText = currentViewIssue.title; // 모달 제목에 이슈 제목 표시
-        document.getElementById('viewDescription').innerText = currentViewIssue.description;
-        document.getElementById('viewReporter').innerText = currentViewIssue.reporter;
-        document.getElementById('viewReportedDate').innerText = currentViewIssue.reportedDate;
-        document.getElementById('viewAssignee').innerText = currentViewIssue.assignee;
-        document.getElementById('viewPriority').innerText = currentViewIssue.priority;
-        document.getElementById('viewStatus').innerText = currentViewIssue.status;
-        document.getElementById('viewType').innerText = currentViewIssue.type;
-        displayComments('viewComments', currentViewIssue.comments, false);
-        document.getElementById('viewModal').style.display = 'block';
-    }
+function viewIssue(id) {
+    console.log('viewIssues id', id);
+    fetch(`api/project/${currentProject}/issues/${id}`,{
+        method:'GET'
+    })
+    .then(response => {
+        if (response.status == 200) {
+            return response.json(); 
+        } else{
+            throw new Error('An error occured while get detail Issues');
+        }
+    })
+    .then(data => {
+        console.log('detailed Issues', data);
+        currentViewIssue = data;
+        if (currentViewIssue) {
+            document.getElementById('viewModalTitle').innerText = currentViewIssue.title; // 모달 제목에 이슈 제목 표시
+            document.getElementById('viewDescription').innerText = currentViewIssue.description;
+            document.getElementById('viewReporter').innerText = currentViewIssue.reporter;
+            document.getElementById('viewReportedDate').innerText = currentViewIssue.reported_date;
+            document.getElementById('viewAssignee').innerText = currentViewIssue.assignee;
+            document.getElementById('viewPriority').innerText = currentViewIssue.priority;
+            document.getElementById('viewStatus').innerText = currentViewIssue.status;
+            document.getElementById('viewType').innerText = currentViewIssue.type;
+            displayComments('viewComments', currentViewIssue.comments, false);
+            document.getElementById('viewModal').style.display = 'block';
+        }
+    })
 }
 
 // 이슈 조회 모달을 닫는 함수
@@ -339,18 +377,32 @@ function closeViewModal() {
 }
 
 // 이슈를 편집하는 함수
-function editIssue(title) {
-    currentEditIssue = sampleIssues[currentProject].find(issue => issue.title === title);
-    if (currentEditIssue) {
-        document.getElementById('editTitle').value = currentEditIssue.title;
-        document.getElementById('editAssignee').value = currentEditIssue.assignee;
-        document.getElementById('editPriority').value = currentEditIssue.priority;
-        document.getElementById('editStatus').value = currentEditIssue.status;
-        document.getElementById('editType').value = currentEditIssue.type;
-        loadAssigneeOptions('editAssignee');
-        displayComments('editComments', currentEditIssue.comments, true);
-        document.getElementById('editModal').style.display = 'block';
-    }
+function editIssue(id) {
+    fetch(`api/project/${currentProject}/issues/${id}`,{
+        method:'GET'
+    })
+    .then(response => {
+        if (response.status == 200) {
+            return response.json(); 
+        } else{
+            throw new Error('An error occured while get detail Issues');
+        }
+    })
+    .then(data=>{
+        currentEditIssue = data;
+        if (currentEditIssue) {
+            document.getElementById('editTitle').value = currentEditIssue.title;
+            document.getElementById('editAssignee').value = currentEditIssue.assignee;
+            document.getElementById('editPriority').value = currentEditIssue.priority;
+            document.getElementById('editStatus').value = currentEditIssue.status;
+            document.getElementById('editType').value = currentEditIssue.type;
+            loadAssigneeOptions('editAssignee');
+            displayComments('editComments', currentEditIssue.comments, true);
+            document.getElementById('editModal').style.display = 'block';
+        }
+    })
+    //currentEditIssue = sampleIssues.find(issue => issue.id == id);
+    //console.log('currenteditissue',currentEditIssue.comments);
 }
 
 // 이슈 편집 모달을 닫는 함수
@@ -374,18 +426,35 @@ function saveEditIssue() {
 // 새로운 댓글을 추가하는 함수
 function addComment() {
     const commentText = document.getElementById('newComment').value;
+    console.log('addcomment', commentText);
     if (commentText && currentEditIssue) {
-        currentEditIssue.comments.push({ author: loggedInUser, text: commentText, date: new Date().toISOString() });
-        displayComments('editComments', currentEditIssue.comments, true);
-        document.getElementById('newComment').value = '';
+        fetch(`api/project/${currentProject}/issues/${currentEditIssue.id}/comments`,{
+            method:'POST',
+            headers:{
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                comment : commentText
+            })
+        })
+        .then(response =>{
+            if (response.status == 201) {
+                currentEditIssue.comments.push({ author: loggedInUser, text: commentText, date: new Date().toISOString() });
+                displayComments('editComments', currentEditIssue.comments, true);
+                document.getElementById('newComment').value = '';
+            } else {
+                throw new Error('Comment cannot saved with Error.');
+            }
+        })
     }
 }
 
 // 댓글을 편집하는 함수
 function editComment(index) {
     currentEditCommentIndex = index;
-    document.getElementById('editCommentText').value = currentEditIssue.comments[index].text;
+    console.log('editComment', currentEditIssue.comments[index].comment);
     document.getElementById('editCommentModal').style.display = 'block';
+    document.getElementById('editCommentText').value = currentEditIssue.comments[index].comment;
 }
 
 // 댓글 편집 모달을 닫는 함수
@@ -396,7 +465,7 @@ function closeEditCommentModal() {
 // 댓글 편집 내용을 저장하는 함수
 function saveEditComment() {
     if (currentEditCommentIndex !== null && currentEditIssue) {
-        currentEditIssue.comments[currentEditCommentIndex].text = document.getElementById('editCommentText').value;
+        currentEditIssue.comments[currentEditCommentIndex].comment = document.getElementById('editCommentText').value;
         displayComments('editComments', currentEditIssue.comments, true);
         closeEditCommentModal();
     }
@@ -405,8 +474,17 @@ function saveEditComment() {
 // 댓글을 삭제하는 함수
 function deleteComment(index) {
     if (currentEditIssue) {
-        currentEditIssue.comments.splice(index, 1);
-        displayComments('editComments', currentEditIssue.comments, true);
+        fetch(`api/project/${currentProject}/issues/${currentEditIssue.id}/comments/${index+1}`,{
+            method:'DELETE'
+        })
+        .then(response=>{
+            if(response.status == 200){
+                currentEditIssue.comments.splice(index, 1);
+                displayComments('editComments', currentEditIssue.comments, true);
+            } else{
+                throw new Error('comment delete error');
+            }    
+        })
     }
 }
 
@@ -414,14 +492,15 @@ function deleteComment(index) {
 function displayComments(containerId, comments, isEditable) {
     const commentContainer = document.getElementById(containerId);
     commentContainer.innerHTML = '';
+    console.log('displayComments',comments);
     comments.forEach((comment, index) => {
         const commentElement = document.createElement('div');
         commentElement.classList.add('comment');
         commentElement.innerHTML = `
             <div>
-                <div class="comment-author">${comment.author}</div>
-                <div class="comment-date">${new Date(comment.date).toLocaleString()}</div>
-                <div class="comment-text">${comment.text}</div>
+                <div class="comment-author">${comment.commenter}</div>
+                <div class="comment-date">${new Date(comment.created_date).toLocaleString()}</div>
+                <div class="comment-text">${comment.comment}</div>
             </div>
             ${isEditable ? `
             <div class="comment-actions">
@@ -475,44 +554,54 @@ function displayProjectUsers() {
 function generateStatistics() {
     const statisticType = document.getElementById('statisticType').value;
     const statisticsResult = document.getElementById('statisticsResult');
-    const issues = sampleIssues[currentProject];
+    const issues = sampleIssues;
     let statistics = {};
 
-    if (statisticType === 'daily') {
-        statistics = issues.reduce((acc, issue) => {
-            const date = issue.reportedDate;
-            if (!acc[date]) acc[date] = 0;
-            acc[date]++;
-            return acc;
-        }, {});
-    } else if (statisticType === 'weekly') {
-        statistics = issues.reduce((acc, issue) => {
-            const date = new Date(issue.reportedDate);
-            const week = `${date.getFullYear()}-W${Math.ceil((date.getDate() + (date.getDay() + 1)) / 7)}`;
-            if (!acc[week]) acc[week] = 0;
-            acc[week]++;
-            return acc;
-        }, {});
-    } else if (statisticType === 'monthly') {
-        statistics = issues.reduce((acc, issue) => {
-            const date = issue.reportedDate.slice(0, 7); // YYYY-MM
-            if (!acc[date]) acc[date] = 0;
-            acc[date]++;
-            return acc;
-        }, {});
-    } else if (statisticType === 'yearly') {
-        statistics = issues.reduce((acc, issue) => {
-            const date = issue.reportedDate.slice(0, 4); // YYYY
-            if (!acc[date]) acc[date] = 0;
-            acc[date]++;
-            return acc;
-        }, {});
-    }
-
-    statisticsResult.innerHTML = '<h3>Statistics Result</h3>';
-    for (let [key, value] of Object.entries(statistics)) {
-        statisticsResult.innerHTML += `<p>${key}: ${value} issues</p>`;
-    }
+    fetch(`api/project/${currentProject}/statistics/time?time_unit=${statisticType}`,{
+        method:'GET'
+    })
+    .then(response =>{
+        if (response.status == 200){
+            return response.json(); 
+        } else{
+            throw new Error('Issues Statistics has error');
+        }
+    })
+    .then(data => {
+        console.log('statistics', data);
+        /*
+        if (statisticType === 'DAY') {
+            statistics = issues.reduce((acc, issue) => {
+                const date = issue.reportedDate;
+                if (!acc[date]) acc[date] = 0;
+                acc[date]++;
+                return acc;
+            }, {});
+        } else if (statisticType === 'MONTH') {
+            statistics = issues.reduce((acc, issue) => {
+                const date = issue.reportedDate.slice(0, 7); // YYYY-MM
+                if (!acc[date]) acc[date] = 0;
+                acc[date]++;
+                return acc;
+            }, {});
+        } else if (statisticType === 'YEAR') {
+            statistics = issues.reduce((acc, issue) => {
+                const date = issue.reportedDate.slice(0, 4); // YYYY
+                if (!acc[date]) acc[date] = 0;
+                acc[date]++;
+                return acc;
+            }, {});
+        }
+        */
+        statisticsResult.innerHTML = '<h3>Statistics Result</h3>';
+        data.forEach((item) => {
+            statisticsResult.innerHTML += `<p>${item.time}: ${item.count} issues</p>`;
+        });
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        statisticsResult.innerHTML = '<h3>Statistics Result</h3><p>Error loading statistics</p>';
+    });
 }
 
 // 이슈 통계 모달 열기
@@ -540,4 +629,4 @@ function loadAssigneeOptions(selectId) {
     });
 }
 
-fetchProjects(); // 초기 프로젝트 데이터를 가져옵니다.
+displayProjects(); // 초기 프로젝트 데이터를 가져옵니다.

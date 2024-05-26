@@ -425,19 +425,20 @@
                 <select id="createAssignee"></select>
                 <label for="createPriority">Priority</label>
                 <select id="createPriority">
-                    <option value="blocker">blocker</option>
-                    <option value="critical">critical</option>
-                    <option value="major">major</option>
-                    <option value="minor">minor</option>
-                    <option value="trivial">trivial</option>
+                    <option value="BLOCKER">BLOCKER</option>
+                    <option value="CRITICAL">CRITICAL</option>
+                    <option value="MAJOR">MAJOR</option>
+                    <option value="MINOR">MINOR</option>
+                    <option value="TRIVIAL">TRIVIAL</option>
                 </select>
                 <label for="createStatus">Status</label>
                 <select id="createStatus">
-                    <option value="new">new</option>
-                    <option value="assigned">assigned</option>
-                    <option value="resolved">resolved</option>
-                    <option value="closed">closed</option>
-                    <option value="reopened">reopened</option>
+                    <option value="NEW">NEW</option>
+                    <option value="ASSIGNED">ASSIGNED</option>
+                    <option value="FIXED">FIXED</option>
+                    <option value="RESOLVED">RESOLVED</option>
+                    <option value="CLOSED">CLOSED</option>
+                    <option value="REOPENED">REOPENED</option>
                 </select>
                 <label for="createType">Type</label>
                 <input type="text" id="createType">
@@ -485,10 +486,9 @@
             <div class="modal-body">
                 <label for="statisticType">Statistic Type</label>
                 <select id="statisticType" onchange="generateStatistics()">
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                    <option value="yearly">Yearly</option>
+                    <option value="DAY">DAY</option>
+                    <option value="MONTH">MONTH</option>
+                    <option value="YEAR">YEAR</option>
                 </select>
                 <div id="statisticsResult"></div>
             </div>
