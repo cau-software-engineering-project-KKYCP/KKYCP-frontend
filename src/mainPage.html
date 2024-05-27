@@ -282,9 +282,11 @@
         </div>
         <div class="search-bar">
             <select id="searchOption">
-                <option value="reporter">Reporter</option>
-                <option value="assignee">Assignee</option>
-                <option value="type">Type</option>
+                <option value="assignee">assignee</option>
+                <option value="reporter">reporter</option>
+                <option value="priority">priority</option>
+                <option value="status">status</option>
+                <option value="type">type</option>
             </select>
             <input type="text" id="search" placeholder="Search issues..." onkeypress="handleKeyPress(event)">
             <button class="btn" onclick="searchIssues()">Search</button>
@@ -300,22 +302,23 @@
                         Priority
                         <select class="filter-select" id="priorityFilter" onchange="filterIssues()">
                             <option value="">All</option>
-                            <option value="blocker">blocker</option>
-                            <option value="critical">critical</option>
-                            <option value="major">major</option>
-                            <option value="minor">minor</option>
-                            <option value="trivial">trivial</option>
+                            <option value="BLOCKER">BLOCKER</option>
+                            <option value="CRITICAL">CRITICAL</option>
+                            <option value="MAJOR">MAJOR</option>
+                            <option value="MINOR">MINOR</option>
+                            <option value="TRIVIAL">TRIVIAL</option>
                         </select>
                     </th>
                     <th>
                         Status
                         <select class="filter-select" id="statusFilter" onchange="filterIssues()">
                             <option value="">All</option>
-                            <option value="new">new</option>
-                            <option value="assigned">assigned</option>
-                            <option value="resolved">resolved</option>
-                            <option value="closed">closed</option>
-                            <option value="reopened">reopened</option>
+                            <option value="NEW">NEW</option>
+                            <option value="ASSIGNED">ASSIGNED</option>
+                            <option value="FIXED">FIXED</option>
+                            <option value="RESOLVED">RESOLVED</option>
+                            <option value="CLOSED">CLOSED</option>
+                            <option value="REOPENED">REOPENED</option>
                         </select>
                     </th>
                     <th>Type</th>
@@ -379,19 +382,20 @@
                 <select id="editAssignee"></select>
                 <label for="editPriority">Priority</label>
                 <select id="editPriority">
-                    <option value="blocker">blocker</option>
-                    <option value="critical">critical</option>
-                    <option value="major">major</option>
-                    <option value="minor">minor</option>
-                    <option value="trivial">trivial</option>
+                    <option value="BLOCKER">BLOCKER</option>
+                    <option value="CRITICAL">CRITICAL</option>
+                    <option value="MAJOR">MAJOR</option>
+                    <option value="MINOR">MINOR</option>
+                    <option value="TRIVIAL">TRIVIAL</option>
                 </select>
                 <label for="editStatus">Status</label>
                 <select id="editStatus">
-                    <option value="new">new</option>
-                    <option value="assigned">assigned</option>
-                    <option value="resolved">resolved</option>
-                    <option value="closed">closed</option>
-                    <option value="reopened">reopened</option>
+                    <option value="NEW">NEW</option>
+                    <option value="ASSIGNED">ASSIGNED</option>
+                    <option value="FIXED">FIXED</option>
+                    <option value="RESOLVED">RESOLVED</option>
+                    <option value="CLOSED">CLOSED</option>
+                    <option value="REOPENED">REOPENED</option>
                 </select>
                 <label for="editType">Type</label>
                 <input type="text" id="editType">

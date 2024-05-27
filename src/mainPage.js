@@ -1,7 +1,7 @@
 // DB에서 불러온 프로젝트 데이터로 초기화할 변수들
 let sampleIssues = []; // 각 프로젝트의 이슈 데이터를 저장하는 객체
 let projects = []; // 프로젝트 목록
-let projectUsers = {}; // 프로젝트별 참여 유저 데이터
+let projectUsers = []; // 프로젝트별 참여 유저 데이터
 
 let currentProject = null; // 현재 선택된 프로젝트
 let currentViewIssue = null;
@@ -65,7 +65,7 @@ async function fetchIssues(projectId) {
     // 예시: const response = await fetch(`/api/issues?project=${projectId}`);
     // const data = await response.json();
     if (projectId) {
-        fetch(`api/project/${projectId}/issues?=offset=${currentPage - 1}&limit=${20}`, {
+        fetch(`api/project/${projectId}/issues?offset=${currentPage - 1}&limit=${20}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -112,10 +112,60 @@ async function fetchIssues(projectId) {
 }
 
 // 선택된 프로젝트의 참여 유저 데이터를 백엔드에서 불러오는 함수
-async function fetchProjectUsers(projectId) {
+async function fetchProjectUsers() {
     // 실제 API 호출 코드로 교체 필요
     // 예시: const response = await fetch(`/api/projects/${projectId}/users`);
     // const data = await response.json();
+    fetch(`api/project/${currentProject}/users`, {
+        method: 'GET'
+    })
+        .then(response => {
+            if (response.status == 200) {
+                return response.json();
+            }
+            else {
+                throw new Error('There are error browsing all users');
+            }
+        })
+        .then(data => {
+            console.log('All Users browsing completed', data);
+            data.forEach(user => {
+                projectUsers.push({ nickname: user.username });
+            });
+            fetch(`api/project/${currentProject}/privileges`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json;charset=UTF-8'
+                }
+            })
+            .then(response => {
+                if (response.status == 200) {
+                    return response.json();
+                }
+                else {
+                    throw new Error('There are error browsing users privileges');
+                }
+            })
+            .then(privilegesData => {
+                console.log('Updated projectUserData with roles', privilegesData);
+                privilegesData.forEach(privilegeInfo => {
+                    let user = projectUsers.find(u => u.nickname == privilegeInfo.username);
+                    if (user) {
+                        user.role = privilegeInfo.privileges;
+                    }
+                });
+                console.log('Updated projectUserData with roles', projectUsers);
+                filterUsers();
+                displayAllUsers(filteredUsers, 1);
+            })
+            console.log('added completed', projectUsers);
+        })
+        .catch(error => {
+            console.error('Error', error);
+        });
+
+
+    /*
     const data = {
         1: [
             { id: 'user1', nickname: 'User One', role: 'PL' },
@@ -148,7 +198,7 @@ async function fetchProjectUsers(projectId) {
             { id: 'user18', nickname: 'User Eighteen', role: 'tester' }
         ]
     };
-    projectUsers[projectId] = data[projectId] || [];
+    */
 }
 
 // 프로젝트 변경 시 호출되는 함수
@@ -156,7 +206,7 @@ function changeProject() {
     const projectSelect = document.getElementById('projectSelect');
     currentProject = projectSelect.value;
     fetchIssues(currentProject);
-    fetchProjectUsers(currentProject);
+    fetchProjectUsers();
 }
 
 // 이슈 리스트를 화면에 표시하는 함수
@@ -164,6 +214,7 @@ function displayIssues(issues, page) {
     const issueTableBody = document.getElementById('issue-table-body');
     const noResults = document.getElementById('no-results');
     issueTableBody.innerHTML = '';
+    console.log('displayIssues', issues);
 
     if (issues.length === 0) {
         noResults.style.display = 'block';
@@ -219,31 +270,47 @@ function updatePagination() {
 // 페이지 변경 함수
 function changePage(page) {
     currentPage = page;
-    displayIssues(sampleIssues[currentProject], page);
+    displayIssues(sampleIssues, page);
 }
 
 // 이슈 검색 함수
 function searchIssues() {
-    const searchQuery = document.getElementById('search').value.toLowerCase();
+    const searchQuery = document.getElementById('search').value;
     const searchOption = document.getElementById('searchOption').value;
-    const filteredIssues = sampleIssues[currentProject].filter(issue =>
-        issue[searchOption].toLowerCase().includes(searchQuery)
-    );
-    totalPages = Math.ceil(filteredIssues.length / issuesPerPage);
-    currentPage = 1;
-    displayIssues(filteredIssues, currentPage);
+    const searchTitle = document.getElementById('titleSearch').value;
+    console.log('options', searchQuery, searchOption, searchTitle, currentPage);
+    fetch(`api/project/${currentProject}/issues?offset=${currentPage-1}&limit=${20}&${searchOption}=${searchQuery}&title=${searchTitle}`,{
+        method : 'GET'
+    })
+    .then(response =>{
+        if (response.status == 200) {
+            return response.json();
+        }
+        else {
+            throw new Error('There are error browsing searching issues');
+        }
+    })
+    .then(data => {
+        console.log('searchIssues completed', data);
+        sampleIssues = data;
+        totalPages = Math.ceil(sampleIssues.length / issuesPerPage);
+        console.log('sampleIssues', sampleIssues);
+        displayIssues(sampleIssues, currentPage);
+    });
 }
 
-// 타이틀로 검색하는 함수
+// 타이틀로 검색하는 함수 ==> 일단 한 번에 검색하도록 세팅함. 타이틀만으로도 검색 가능 칸 비워두면 됨.
+/*
 function searchByTitle() {
-    const searchQuery = document.getElementById('titleSearch').value.toLowerCase();
-    const filteredIssues = sampleIssues[currentProject].filter(issue =>
+    
+    const filteredIssues = sampleIssues.filter(issue =>
         issue.title.toLowerCase().includes(searchQuery)
     );
     totalPages = Math.ceil(filteredIssues.length / issuesPerPage);
     currentPage = 1;
     displayIssues(filteredIssues, currentPage);
 }
+*/
 
 // 필터링된 이슈를 화면에 표시하는 함수
 function filterIssues() {
@@ -251,7 +318,7 @@ function filterIssues() {
     const statusFilter = document.getElementById('statusFilter').value;
     const dateFilter = document.getElementById('dateFilter').value;
 
-    let filteredIssues = sampleIssues[currentProject].filter(issue =>
+    let filteredIssues = sampleIssues.filter(issue =>
         (priorityFilter === "" || issue.priority === priorityFilter) &&
         (statusFilter === "" || issue.status === statusFilter)
     );
@@ -301,6 +368,7 @@ function closeCreateIssueModal() {
 
 // 새로운 이슈를 저장하는 함수
 function saveCreateIssue() {
+    const id = sampleIssues.length > 0 ? sampleIssues[sampleIssues.length - 1].id + 1 : 1;
     const title = document.getElementById('createTitle').value;
     const description = document.getElementById('createDescription').value;
     const assignee = document.getElementById('createAssignee').value;
@@ -311,7 +379,6 @@ function saveCreateIssue() {
     const reporter = loggedInUser;
 
     if (title && description) {
-        const newIssue = { title, description, reporter, assignee, priority, status, reported_date, type, comments: [] };
         fetch(`api/project/${currentProject}/issues`,{
             method : 'POST',
             headers:{
@@ -327,7 +394,7 @@ function saveCreateIssue() {
         .then(response=>{
             if (response.status == 201){
                 console.log(response);
-                const newIssue = { title, description, reporter, assignee, priority, status, reported_date, type, comments: [] };
+                const newIssue = { id, title, description, reporter, assignee, priority, status, reported_date, type, comments: [] };
                 sampleIssues.push(newIssue);
                 // 새로운 이슈를 백엔드에 저장하는 로직이 추가되어야 합니다.
                 totalPages = Math.ceil(sampleIssues.length / issuesPerPage);
@@ -378,7 +445,8 @@ function closeViewModal() {
 
 // 이슈를 편집하는 함수
 function editIssue(id) {
-    fetch(`api/project/${currentProject}/issues/${id}`,{
+    console.log('editIssue',currentProject, id)
+    fetch(`api/project/${currentProject}/issues/${id}`,{ // 편집할 때 상세 이슈 보는 api
         method:'GET'
     })
     .then(response => {
@@ -391,12 +459,12 @@ function editIssue(id) {
     .then(data=>{
         currentEditIssue = data;
         if (currentEditIssue) {
+            loadAssigneeOptions('editAssignee');
             document.getElementById('editTitle').value = currentEditIssue.title;
             document.getElementById('editAssignee').value = currentEditIssue.assignee;
             document.getElementById('editPriority').value = currentEditIssue.priority;
             document.getElementById('editStatus').value = currentEditIssue.status;
             document.getElementById('editType').value = currentEditIssue.type;
-            loadAssigneeOptions('editAssignee');
             displayComments('editComments', currentEditIssue.comments, true);
             document.getElementById('editModal').style.display = 'block';
         }
@@ -418,8 +486,87 @@ function saveEditIssue() {
         currentEditIssue.priority = document.getElementById('editPriority').value;
         currentEditIssue.status = document.getElementById('editStatus').value;
         currentEditIssue.type = document.getElementById('editType').value;
-        displayIssues(sampleIssues[currentProject], currentPage);
-        closeEditModal();
+        console.log('saveEditISsue : currnetEditIssue', currentEditIssue);
+        if(currentEditIssue.status == 'FIXED'){
+            fetch(`api/project/${currentProject}/issues/${currentEditIssue.id}`,{
+                method:'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body : JSON.stringify({
+                    fixer: currentEditIssue.assignee,
+                    status : 'FIXED'
+                })
+            })
+            .then(response=>{
+                if(response.status == 200){
+                    console.log('Fixed Issues');
+                    // sampleIssues 배열에서 currentEditIssue.id와 동일한 id를 가진 issue를 찾아 수정
+                    sampleIssues = sampleIssues.map(issue => {
+                        if (issue.id === currentEditIssue.id) {
+                            return {
+                                ...issue,
+                                fixer: currentEditIssue.assignee,
+                                status: "FIXED"
+                            };
+                        }
+                        return issue;
+                    });
+                    displayIssues(sampleIssues, currentPage);
+                    closeEditModal();
+                } else{
+                    return response.json().then(errorData => {
+                        console.error('Error updating issue:', errorData);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Network error:', error);
+            });
+        }
+        else {  
+            fetch(`api/project/${currentProject}/issues/${currentEditIssue.id}`,{
+                method:'PATCH',
+                headers:{
+                    'Content-Type' : 'application/json'
+                },
+                body : JSON.stringify({
+                    //title : currentEditIssue.title,
+                    //description : currentEditIssue.description || '',
+                    assignee: currentEditIssue.assignee,
+                    status : "ASSIGNED",
+                    //priority : currentEditIssue.priority,
+                    //type : currentEditIssue.type
+                })
+            })
+            .then(response=>{
+                if(response.status == 200){
+                    console.log('save Edit Issue!');
+
+                    // sampleIssues 배열에서 currentEditIssue.id와 동일한 id를 가진 issue를 찾아 수정
+                    sampleIssues = sampleIssues.map(issue => {
+                        if (issue.id === currentEditIssue.id) {
+                            return {
+                                ...issue,
+                                assignee: currentEditIssue.assignee,
+                                status: "ASSIGNED"
+                            };
+                        }
+                        return issue;
+                    });
+                    
+                    displayIssues(sampleIssues, currentPage);
+                    closeEditModal();
+                } else{
+                    return response.json().then(errorData => {
+                        console.error('Error updating issue:', errorData);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Network error:', error);
+            });
+        }
     }
 }
 
@@ -515,10 +662,10 @@ function displayComments(containerId, comments, isEditable) {
 
 // 이슈를 삭제하는 함수
 function deleteIssue(title) {
-    sampleIssues[currentProject] = sampleIssues[currentProject].filter(issue => issue.title !== title);
-    totalPages = Math.ceil(sampleIssues[currentProject].length / issuesPerPage);
+    sampleIssues = sampleIssues.filter(issue => issue.title !== title);
+    totalPages = Math.ceil(sampleIssues.length / issuesPerPage);
     if (currentPage > totalPages) currentPage = totalPages;
-    displayIssues(sampleIssues[currentProject], currentPage);
+    displayIssues(sampleIssues, currentPage);
 }
 
 // 참여 유저 목록 모달 열기
@@ -536,7 +683,7 @@ function closeUserListModal() {
 function displayProjectUsers() {
     const userListBody = document.getElementById('user-list-body');
     userListBody.innerHTML = '';
-    const users = projectUsers[currentProject] || [];
+    const users = projectUsers;
 
     users.forEach((user, index) => {
         const row = document.createElement('tr');
@@ -619,7 +766,8 @@ function closeIssueStatisticsModal() {
 function loadAssigneeOptions(selectId) {
     const select = document.getElementById(selectId);
     select.innerHTML = '';
-    const devUsers = projectUsers[currentProject].filter(user => user.role === 'dev');
+    console.log('loadAssigneeOptions', projectUsers);
+    const devUsers = projectUsers.filter(user => user.role[0] == 'PARTICIPANT');
 
     devUsers.forEach(user => {
         const option = document.createElement('option');

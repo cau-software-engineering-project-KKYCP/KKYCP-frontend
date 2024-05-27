@@ -191,5 +191,32 @@ function saveCreateProject() {
     }
 }
 
-// 초기 프로젝트 리스트 표시
-displayProjects(sampleProjects, currentPage);
+//서버로부터 프로젝트 가져오는 함수
+function fetchProject(){
+    fetch('api/project',{
+        method: 'GET'
+    })
+    .then(response => {
+        if (response.status == 200){
+            return response.json();
+        } else{
+            throw new Error('get project has error');
+        }
+    })
+    .then(data => {
+        console.log('get project', data);
+        data.forEach(project=>{
+            console.log('push 이전', project);
+            sampleProjects.push({id : project.id, name : project.project_name});
+            console.log('push 이후',sampleProjects);
+            displayProjects(sampleProjects, currentPage);
+        });
+    })
+    .catch(error =>{
+        console.log(error);
+    });
+}
+
+//초기 프로젝트 서버로부터 가져오고 표시하기
+fetchProject();
+
