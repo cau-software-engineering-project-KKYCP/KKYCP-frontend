@@ -729,7 +729,7 @@ function addComment() {
         })
         .then(response =>{
             if (response.status == 201) {
-                currentViewIssue.comments.push({ commenter: loggedInUser, comment: commentText, created_date: new Date().toISOString().slice(0, 10)});
+                viewIssue(currentViewIssue.id);
                 console.log('display 직전', currentViewIssue.comments)
                 displayComments('editComments', currentViewIssue.comments, true);
                 document.getElementById('newComment').value = '';
@@ -759,7 +759,7 @@ function saveEditedComment() {
     const editedComment = document.getElementById('editCommentText').value;
     console.log('saveEditedComment', editedComment, currentViewCommentIndex, currentViewIssue.comments[currentViewCommentIndex].comment);
 
-    fetch(`api/project/${currentProject}/issues/${currentViewIssue.id}/comments/${currentViewCommentIndex+1}`,{
+    fetch(`api/project/${currentProject}/issues/${currentViewIssue.id}/comments/${currentViewIssue.comments[currentViewCommentIndex].id}`,{
         method:'PUT',
         headers:{
             'Content-Type': 'application/json'
@@ -776,6 +776,8 @@ function saveEditedComment() {
 
             // 모달 창 닫기
             document.getElementById('editCommentModal').style.display = 'none';
+
+            displayComments('editComments', currentViewIssue.comments, true);
         }
         else{
             console.log('코멘트 수정 안됨.');
@@ -793,7 +795,8 @@ function closeEditCommentModal() {
     document.getElementById('editCommentModal').style.display = 'none';
 }
 
-// 댓글 편집 내용을 저장하는 함수
+// 댓글 편집 내용을 저장하는 함수 : 사용 X
+/*
 function saveEditComment() {
     if (currentEditCommentIndex !== null && currentEditIssue) {
         currentEditIssue.comments[currentEditCommentIndex].comment = document.getElementById('editCommentText').value;
@@ -801,12 +804,13 @@ function saveEditComment() {
         closeEditCommentModal();
     }
 }
+*/
 
 // 댓글을 삭제하는 함수
 function deleteComment(index) {
-    console.log('딜리트 코멘트 함수', currentViewIssue);
+    console.log('딜리트 코멘트 함수', currentViewIssue.comments[index], index);
     if (currentViewIssue) {
-        fetch(`api/project/${currentProject}/issues/${currentViewIssue.id}/comments/${index+1}`,{
+        fetch(`api/project/${currentProject}/issues/${currentViewIssue.id}/comments/${currentViewIssue.comments[index].id}`,{
             method:'DELETE'
         })
         .then(response=>{
@@ -970,24 +974,3 @@ function loadAssigneeOptions(selectId) {
 }
 
 displayProjects(); // 초기 프로젝트 데이터를 가져옵니다.
-getUserNameFromCookie();
-
-// 쿠키에서 유저 이름 가져오기
-function getUserNameFromCookie() {
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.startsWith('JSESSIONID=')) {
-        return cookie.substring('JSESSIONID='.length, cookie.length);
-      }
-    }
-    return null; // 쿠키에 유저 이름이 없는 경우
-  }
-  
-  // 사용 예시
-  const userName = getUserNameFromCookie();
-  if (userName) {
-    console.log(`현재 사용 중인 유저: ${userName}`);
-  } else {
-    console.log('유저 이름을 찾을 수 없습니다.');
-  }
