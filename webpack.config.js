@@ -2,6 +2,7 @@ const path = require('path');
 
 module.exports = {
     mode: 'development',
+    entry: './src/login.js',
     devServer: {
         static: {
             directory: path.join(__dirname, 'src'),
@@ -14,6 +15,11 @@ module.exports = {
             pathRewrite: { '^/api': '' }
             }
         ],
+        historyApiFallback: {
+            rewrites: [
+              { from: /.*/, to: '/login.html' },
+            ],
+          },
         port: 3030,
         open: false,
     },

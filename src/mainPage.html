@@ -268,17 +268,10 @@
             <button class="btn" onclick="openUserListModal()">Participated Users</button>
             <button class="btn" onclick="openIssueStatisticsModal()">Issue Statistics</button>
         </div>
-        <div class="project-select">
-            <select id="projectSelect" onchange="changeProject()">
-                <!-- 옵션은 나중에 동적으로 추가됩니다. -->
-            </select>
-        </div>
     </header>
     <div class="container">
         <div class="search-bar">
-            <input type="text" id="titleSearch" placeholder="Search by title..."
-                onkeypress="handleTitleKeyPress(event)">
-            <button class="btn" onclick="searchByTitle()">Search Title</button>
+            <input type="text" id="titleSearch" placeholder="Search by title...">
         </div>
         <div class="search-bar">
             <select id="searchOption">
@@ -297,7 +290,6 @@
                     <th>No.</th>
                     <th>Issue Title</th>
                     <th>Reporter</th>
-                    <th>Assignee</th>
                     <th>
                         Priority
                         <select class="filter-select" id="priorityFilter" onchange="filterIssues()">
@@ -355,12 +347,16 @@
                 <p><strong>Reporter:</strong> <span id="viewReporter"></span></p>
                 <p><strong>Reported Date:</strong> <span id="viewReportedDate"></span></p>
                 <p><strong>Assignee:</strong> <span id="viewAssignee"></span></p>
+                <p><strong>Fixer:</strong> <span id="viewFixer"></span></p>
                 <p><strong>Priority:</strong> <span id="viewPriority"></span></p>
                 <p><strong>Status:</strong> <span id="viewStatus"></span></p>
                 <p><strong>Type:</strong> <span id="viewType"></span></p>
                 <div class="comments">
                     <h3>Comments</h3>
-                    <div id="viewComments"></div>
+                    <div id="editComments"></div>
+                    <input type="text" id="newComment" placeholder="Add a comment..."
+                        onkeypress="handleCommentKeyPress(event)">
+                    <button class="btn" onclick="addComment()">Add Comment</button>
                 </div>
             </div>
             <div class="modal-footer">
@@ -388,6 +384,17 @@
                     <option value="MINOR">MINOR</option>
                     <option value="TRIVIAL">TRIVIAL</option>
                 </select>
+                <label for="editType">Type</label>
+                <input type="text" id="editType">
+                <div class="comments">
+                    <h3>Comments</h3>
+                    <div id="viewComments"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="saveEditIssue()">Save</button>
+            </div>
+            <div class="modal-body">
                 <label for="editStatus">Status</label>
                 <select id="editStatus">
                     <option value="NEW">NEW</option>
@@ -397,19 +404,10 @@
                     <option value="CLOSED">CLOSED</option>
                     <option value="REOPENED">REOPENED</option>
                 </select>
-                <label for="editType">Type</label>
-                <input type="text" id="editType">
-                <div class="comments">
-                    <h3>Comments</h3>
-                    <div id="editComments"></div>
-                    <input type="text" id="newComment" placeholder="Add a comment..."
-                        onkeypress="handleCommentKeyPress(event)">
-                    <button class="btn" onclick="addComment()">Add Comment</button>
-                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn" onclick="closeEditModal()">Cancel</button>
-                <button class="btn" onclick="saveEditIssue()">Save</button>
+                <button class="btn" onclick="saveEditStatusIssue()">Status Save</button>
             </div>
         </div>
     </div>
@@ -425,8 +423,6 @@
                 <input type="text" id="createTitle">
                 <label for="createDescription">Description</label>
                 <textarea id="createDescription"></textarea>
-                <label for="createAssignee">Assignee</label>
-                <select id="createAssignee"></select>
                 <label for="createPriority">Priority</label>
                 <select id="createPriority">
                     <option value="BLOCKER">BLOCKER</option>
@@ -438,11 +434,6 @@
                 <label for="createStatus">Status</label>
                 <select id="createStatus">
                     <option value="NEW">NEW</option>
-                    <option value="ASSIGNED">ASSIGNED</option>
-                    <option value="FIXED">FIXED</option>
-                    <option value="RESOLVED">RESOLVED</option>
-                    <option value="CLOSED">CLOSED</option>
-                    <option value="REOPENED">REOPENED</option>
                 </select>
                 <label for="createType">Type</label>
                 <input type="text" id="createType">
@@ -498,6 +489,21 @@
             </div>
             <div class="modal-footer">
                 <button class="btn" onclick="closeIssueStatisticsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+    <!--- 편집 모달 창 HTML 추가-->
+    <div id="editCommentModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Comment</h2>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="editCommentText"></input>
+                <div>
+                    <button class="btn" onclick="saveEditedComment()">Save</button>
+                    <button class="btn" onclick="document.getElementById('editCommentModal').style.display = 'none';">Cancel</button>
+                </div>
             </div>
         </div>
     </div>

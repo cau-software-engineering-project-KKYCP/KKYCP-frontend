@@ -50,9 +50,6 @@ function displayProjects(projects, page) {
         row.innerHTML = `
             <td>${project.id}</td>
             <td>${project.name}</td>
-            <td>${project.description}</td>
-            <td>${project.createdDate}</td>
-            <td>${project.createdBy}</td>
             <td>
                 <button class="btn" onclick="viewProject(${start + index})">View</button>
                 <button class="btn" onclick="editProject(${start + index})">Edit</button>
@@ -110,7 +107,6 @@ function editProject(index) {
     currentEditProjectIndex = index;
     const project = sampleProjects[index];
     document.getElementById('editProjectName').value = project.name;
-    document.getElementById('editProjectDescription').value = project.description;
     document.getElementById('editProjectModal').style.display = 'block';
 }
 
@@ -122,10 +118,8 @@ function closeEditProjectModal() {
 // 프로젝트 편집 내용을 저장하는 함수
 function saveEditProject() {
     const newName = document.getElementById('editProjectName').value;
-    const newDescription = document.getElementById('editProjectDescription').value;
     if (currentEditProjectIndex !== null && newName && newDescription) {
         sampleProjects[currentEditProjectIndex].name = newName;
-        sampleProjects[currentEditProjectIndex].description = newDescription;
         // 수정된 프로젝트 이름과 설명을 백엔드에 저장하는 로직이 추가되어야 합니다.
         displayProjects(sampleProjects, currentPage);
         closeEditProjectModal();

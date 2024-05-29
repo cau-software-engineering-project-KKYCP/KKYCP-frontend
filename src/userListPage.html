@@ -190,7 +190,6 @@
             <thead>
                 <tr>
                     <th>No.</th>
-                    <th>ID</th>
                     <th>Nickname</th>
                     <th>Authorization</th>
                     <th>Actions</th>
@@ -256,8 +255,8 @@
                     <table class="user-list">
                         <thead>
                             <tr>
+                                <th></th>
                                 <th>No.</th>
-                                <th>ID</th>
                                 <th>Nickname</th>
                                 <th>Role</th>
                             </tr>
@@ -269,11 +268,14 @@
                 </div>
             </div>
             <div class="modal-footer">
+                <button class="btn" onclick="deleteAddedUsers()">Delete</button>
                 <button class="btn" onclick="closeAddUserModal()">Cancel</button>
                 <button class="btn" onclick="saveAddedUsers()">Save</button>
+                
             </div>
         </div>
     </div>
+    
 </body>
 
 </html>

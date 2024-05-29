@@ -34,16 +34,16 @@ async function fetchProjects() {
 
 // 프로젝트 목록을 드롭다운에 표시하는 함수
 function displayProjects() {
-    const projectSelect = document.getElementById('projectSelect');
-    projectSelect.innerHTML = '';
-
+    //const projectSelect = document.getElementById('projectSelect');
+    //projectSelect.innerHTML = '';
+    /*
     projects.forEach(project => {
         const option = document.createElement('option');
         option.value = project.name;
         option.text = project.name;
-        projectSelect.appendChild(option);
+        //projectSelect.appendChild(option);
     });
-
+    */
     // URL 파라미터에서 선택된 프로젝트를 가져와 설정
     const urlParams = new URLSearchParams(window.location.search);
     const selectedProjectId = urlParams.get('projectId');
@@ -203,8 +203,8 @@ async function fetchProjectUsers() {
 
 // 프로젝트 변경 시 호출되는 함수
 function changeProject() {
-    const projectSelect = document.getElementById('projectSelect');
-    currentProject = projectSelect.value;
+    //const projectSelect = document.getElementById('projectSelect');
+    //currentProject = projectSelect.value;
     fetchIssues(currentProject);
     fetchProjectUsers();
 }
@@ -231,7 +231,6 @@ function displayIssues(issues, page) {
                 <td>${start + index + 1}</td>
                 <td>${issue.title}</td>
                 <td>${issue.reporter}</td>
-                <td>${issue.assignee}</td>
                 <td>${issue.priority}</td>
                 <td>${issue.status}</td>
                 <td>${issue.type}</td>
@@ -285,6 +284,9 @@ function searchIssues() {
     .then(response =>{
         if (response.status == 200) {
             return response.json();
+        } else if(response.status == 400){
+            console.log('잘못된 형식의 쿼리입력');
+            alert('잘못된 형식의 Title이나 조건을 입력하셨습니다.');
         }
         else {
             throw new Error('There are error browsing searching issues');
@@ -296,6 +298,9 @@ function searchIssues() {
         totalPages = Math.ceil(sampleIssues.length / issuesPerPage);
         console.log('sampleIssues', sampleIssues);
         displayIssues(sampleIssues, currentPage);
+        if(sampleIssues.length === 0){
+            alert('해당 Issue가 존재하지 않습니다.');
+        }
     });
 }
 
@@ -357,7 +362,7 @@ function handleCommentKeyPress(event) {
 
 // 새로운 이슈를 생성하는 모달 열기
 function openCreateIssueModal() {
-    loadAssigneeOptions('createAssignee'); // Assignee 목록을 로드
+    //loadAssigneeOptions('createAssignee'); // Assignee 목록을 로드
     document.getElementById('createIssueModal').style.display = 'block';
 }
 
@@ -371,7 +376,6 @@ function saveCreateIssue() {
     const id = sampleIssues.length > 0 ? sampleIssues[sampleIssues.length - 1].id + 1 : 1;
     const title = document.getElementById('createTitle').value;
     const description = document.getElementById('createDescription').value;
-    const assignee = document.getElementById('createAssignee').value;
     const priority = document.getElementById('createPriority').value;
     const status = document.getElementById('createStatus').value;
     const type = document.getElementById('createType').value;
@@ -394,7 +398,7 @@ function saveCreateIssue() {
         .then(response=>{
             if (response.status == 201){
                 console.log(response);
-                const newIssue = { id, title, description, reporter, assignee, priority, status, reported_date, type, comments: [] };
+                const newIssue = { id, title, description, reporter, priority, status, reported_date, type, comments: [] };
                 sampleIssues.push(newIssue);
                 // 새로운 이슈를 백엔드에 저장하는 로직이 추가되어야 합니다.
                 totalPages = Math.ceil(sampleIssues.length / issuesPerPage);
@@ -429,10 +433,11 @@ function viewIssue(id) {
             document.getElementById('viewReporter').innerText = currentViewIssue.reporter;
             document.getElementById('viewReportedDate').innerText = currentViewIssue.reported_date;
             document.getElementById('viewAssignee').innerText = currentViewIssue.assignee;
+            document.getElementById('viewFixer').innerText = currentViewIssue.fixer;
             document.getElementById('viewPriority').innerText = currentViewIssue.priority;
             document.getElementById('viewStatus').innerText = currentViewIssue.status;
             document.getElementById('viewType').innerText = currentViewIssue.type;
-            displayComments('viewComments', currentViewIssue.comments, false);
+            displayComments('editComments', currentViewIssue.comments, true);
             document.getElementById('viewModal').style.display = 'block';
         }
     })
@@ -463,9 +468,9 @@ function editIssue(id) {
             document.getElementById('editTitle').value = currentEditIssue.title;
             document.getElementById('editAssignee').value = currentEditIssue.assignee;
             document.getElementById('editPriority').value = currentEditIssue.priority;
-            document.getElementById('editStatus').value = currentEditIssue.status;
+            updateStatusOptions(currentEditIssue.status); // 이 부분 추가
             document.getElementById('editType').value = currentEditIssue.type;
-            displayComments('editComments', currentEditIssue.comments, true);
+            displayComments('viewComments', currentEditIssue.comments, false);
             document.getElementById('editModal').style.display = 'block';
         }
     })
@@ -473,21 +478,61 @@ function editIssue(id) {
     //console.log('currenteditissue',currentEditIssue.comments);
 }
 
+function updateStatusOptions(currentStatus) {
+    const statusSelect = document.getElementById('editStatus');
+    statusSelect.innerHTML = ''; // 기존 옵션 초기화
+
+    // 상태에 따라 선택 옵션 업데이트
+    switch (currentStatus) {
+        case 'NEW':
+            addStatusOption(statusSelect, 'NEW', 'NEW');
+            break;
+        case 'ASSIGNED':
+            addStatusOption(statusSelect, 'ASSIGNED', 'ASSIGNED');
+            addStatusOption(statusSelect, 'FIXED', 'FIXED');
+            break;
+        case 'FIXED':
+            addStatusOption(statusSelect, 'FIXED', 'FIXED');
+            addStatusOption(statusSelect, 'RESOLVED', 'RESOLVED');
+            break;
+        case 'RESOLVED':
+            addStatusOption(statusSelect, 'RESOLVED', 'RESOLVED');
+            addStatusOption(statusSelect, 'CLOSED', 'CLOSED');
+            addStatusOption(statusSelect, 'REOPENED', 'REOPENED');
+            break;
+        case 'REOPENED':
+            addStatusOption(statusSelect, 'REOPENED', 'REOPENED');
+            break;
+        case 'CLOSED':
+            addStatusOption(statusSelect, 'CLOSED', 'CLOSED');
+            break;
+    }
+}
+
+function addStatusOption(select, value, text) {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = text;
+    select.appendChild(option);
+}
+
 // 이슈 편집 모달을 닫는 함수
 function closeEditModal() {
     document.getElementById('editModal').style.display = 'none';
 }
 
-// 이슈 편집 내용을 저장하는 함수
-function saveEditIssue() {
+//STATUS 수정 함수
+function saveEditStatusIssue(){
     if (currentEditIssue) {
+        let beforeStatus = currentEditIssue.status;
         currentEditIssue.title = document.getElementById('editTitle').value;
         currentEditIssue.assignee = document.getElementById('editAssignee').value;
         currentEditIssue.priority = document.getElementById('editPriority').value;
         currentEditIssue.status = document.getElementById('editStatus').value;
         currentEditIssue.type = document.getElementById('editType').value;
         console.log('saveEditISsue : currnetEditIssue', currentEditIssue);
-        if(currentEditIssue.status == 'FIXED'){
+        console.log(beforeStatus, currentEditIssue.status);
+        if(currentEditIssue.status == 'FIXED' && beforeStatus != 'FIXED'){
             fetch(`api/project/${currentProject}/issues/${currentEditIssue.id}`,{
                 method:'PATCH',
                 headers: {
@@ -507,7 +552,7 @@ function saveEditIssue() {
                             return {
                                 ...issue,
                                 fixer: currentEditIssue.assignee,
-                                status: "FIXED"
+                                status: currentEditIssue.status
                             };
                         }
                         return issue;
@@ -524,7 +569,7 @@ function saveEditIssue() {
                 console.error('Network error:', error);
             });
         }
-        else {  
+        else if(beforeStatus != currentEditIssue.status) {  
             fetch(`api/project/${currentProject}/issues/${currentEditIssue.id}`,{
                 method:'PATCH',
                 headers:{
@@ -533,8 +578,8 @@ function saveEditIssue() {
                 body : JSON.stringify({
                     //title : currentEditIssue.title,
                     //description : currentEditIssue.description || '',
-                    assignee: currentEditIssue.assignee,
-                    status : "ASSIGNED",
+                    //assignee: currentEditIssue.assignee,
+                    status : currentEditIssue.status,
                     //priority : currentEditIssue.priority,
                     //type : currentEditIssue.type
                 })
@@ -549,12 +594,110 @@ function saveEditIssue() {
                             return {
                                 ...issue,
                                 assignee: currentEditIssue.assignee,
-                                status: "ASSIGNED"
+                                status: currentEditIssue.status
                             };
                         }
                         return issue;
                     });
-                    
+                    displayIssues(sampleIssues, currentPage);
+                    closeEditModal();
+                } else{
+                    return response.json().then(errorData => {
+                        console.error('Error updating issue:', errorData);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Network error:', error);
+            });
+        } else if(beforeStatus == currentEditIssue.status){
+            alert('Status를 바꾸신 후 Save해주세요.');
+        }
+    }
+}
+
+// 이슈 편집 내용을 저장하는 함수
+function saveEditIssue() {
+    if (currentEditIssue) {
+        beforeStatus = currentEditIssue.status;
+        currentEditIssue.title = document.getElementById('editTitle').value;
+        currentEditIssue.assignee = document.getElementById('editAssignee').value;
+        currentEditIssue.priority = document.getElementById('editPriority').value;
+        currentEditIssue.status = document.getElementById('editStatus').value;
+        currentEditIssue.type = document.getElementById('editType').value;
+        console.log('saveEditISsue : currnetEditIssue', currentEditIssue);
+        if(currentEditIssue.assignee != null && currentEditIssue.status == 'NEW'){  
+            fetch(`api/project/${currentProject}/issues/${currentEditIssue.id}`,{
+                method:'PATCH',
+                headers:{
+                    'Content-Type' : 'application/json'
+                },
+                body : JSON.stringify({
+                    //title : currentEditIssue.title,
+                    //description : currentEditIssue.description || '',
+                    assignee: currentEditIssue.assignee,
+                    status : 'ASSIGNED',
+                    //priority : currentEditIssue.priority,
+                    //type : currentEditIssue.type
+                })
+            })
+            .then(response=>{
+                if(response.status == 200){
+                    console.log('save Edit Issue!');
+
+                    // sampleIssues 배열에서 currentEditIssue.id와 동일한 id를 가진 issue를 찾아 수정
+                    sampleIssues = sampleIssues.map(issue => {
+                        if (issue.id === currentEditIssue.id) {
+                            return {
+                                ...issue,
+                                assignee: currentEditIssue.assignee,
+                                status: 'ASSIGNED'
+                            };
+                        }
+                        return issue;
+                    });
+                    displayIssues(sampleIssues, currentPage);
+                    closeEditModal();
+                } else{
+                    return response.json().then(errorData => {
+                        console.error('Error updating issue:', errorData);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Network error:', error);
+            });
+        } 
+        else{
+            fetch(`api/project/${currentProject}/issues/${currentEditIssue.id}`,{
+                method:'PATCH',
+                headers:{
+                    'Content-Type' : 'application/json'
+                },
+                body : JSON.stringify({
+                    title : currentEditIssue.title,
+                    //description : currentEditIssue.description || '',
+                    //assignee: currentEditIssue.assignee,
+                    //status : currentEditIssue.status,
+                    priority : currentEditIssue.priority,
+                    type : currentEditIssue.type
+                })
+            })
+            .then(response=>{
+                if(response.status == 200){
+                    console.log('save Edit Issue!');
+    
+                    // sampleIssues 배열에서 currentEditIssue.id와 동일한 id를 가진 issue를 찾아 수정
+                    sampleIssues = sampleIssues.map(issue => {
+                        if (issue.id === currentEditIssue.id) {
+                            return {
+                                ...issue,
+                                assignee: currentEditIssue.assignee,
+                                status: currentEditIssue.status
+                            };
+                        }
+                        return issue;
+                    });
                     displayIssues(sampleIssues, currentPage);
                     closeEditModal();
                 } else{
@@ -574,8 +717,8 @@ function saveEditIssue() {
 function addComment() {
     const commentText = document.getElementById('newComment').value;
     console.log('addcomment', commentText);
-    if (commentText && currentEditIssue) {
-        fetch(`api/project/${currentProject}/issues/${currentEditIssue.id}/comments`,{
+    if (commentText && currentViewIssue) {
+        fetch(`api/project/${currentProject}/issues/${currentViewIssue.id}/comments`,{
             method:'POST',
             headers:{
                 'Content-Type': 'application/json'
@@ -586,22 +729,63 @@ function addComment() {
         })
         .then(response =>{
             if (response.status == 201) {
-                currentEditIssue.comments.push({ author: loggedInUser, text: commentText, date: new Date().toISOString() });
-                displayComments('editComments', currentEditIssue.comments, true);
+                currentViewIssue.comments.push({ commenter: loggedInUser, comment: commentText, created_date: new Date().toISOString().slice(0, 10)});
+                console.log('display 직전', currentViewIssue.comments)
+                displayComments('editComments', currentViewIssue.comments, true);
                 document.getElementById('newComment').value = '';
             } else {
                 throw new Error('Comment cannot saved with Error.');
             }
+        })
+        .catch(error=>{
+            console.error(error.message);
+            alert(error.message);
         })
     }
 }
 
 // 댓글을 편집하는 함수
 function editComment(index) {
-    currentEditCommentIndex = index;
-    console.log('editComment', currentEditIssue.comments[index].comment);
+    currentViewCommentIndex = index;
+    //console.log('editComment', currentEditIssue, 'index: ', currentEditCommentIndex);
+    console.log('editComment', currentViewIssue.comments[index].comment);
     document.getElementById('editCommentModal').style.display = 'block';
-    document.getElementById('editCommentText').value = currentEditIssue.comments[index].comment;
+    document.getElementById('editCommentText').value = currentViewIssue.comments[index].comment;
+}
+
+// 댓글 편집 모달 창에서 Save 버튼을 누르면 실행되는 함수
+function saveEditedComment() {
+    // 편집된 댓글 내용 가져오기
+    const editedComment = document.getElementById('editCommentText').value;
+    console.log('saveEditedComment', editedComment, currentViewCommentIndex, currentViewIssue.comments[currentViewCommentIndex].comment);
+
+    fetch(`api/project/${currentProject}/issues/${currentViewIssue.id}/comments/${currentViewCommentIndex+1}`,{
+        method:'PUT',
+        headers:{
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            comment:editedComment
+        })
+    })
+    .then(response => {
+        if(response.status == 200){
+            console.log('comment 수정 완료');
+            // 원본 댓글 내용 업데이트
+            currentViewIssue.comments[currentViewCommentIndex].comment = editedComment;
+
+            // 모달 창 닫기
+            document.getElementById('editCommentModal').style.display = 'none';
+        }
+        else{
+            console.log('코멘트 수정 안됨.');
+            alert('코멘트 수정 안됨')
+        }
+    })
+    .catch(error => {
+        console.error('Error', error);
+    });
+
 }
 
 // 댓글 편집 모달을 닫는 함수
@@ -620,17 +804,24 @@ function saveEditComment() {
 
 // 댓글을 삭제하는 함수
 function deleteComment(index) {
-    if (currentEditIssue) {
-        fetch(`api/project/${currentProject}/issues/${currentEditIssue.id}/comments/${index+1}`,{
+    console.log('딜리트 코멘트 함수', currentViewIssue);
+    if (currentViewIssue) {
+        fetch(`api/project/${currentProject}/issues/${currentViewIssue.id}/comments/${index+1}`,{
             method:'DELETE'
         })
         .then(response=>{
             if(response.status == 200){
-                currentEditIssue.comments.splice(index, 1);
-                displayComments('editComments', currentEditIssue.comments, true);
+                currentViewIssue.comments.splice(index, 1);
+                displayComments('editComments', currentViewIssue.comments, true);
+            } else if (response.status == 404){
+                alert('해당하는 코멘트가 없습니다.');
             } else{
                 throw new Error('comment delete error');
             }    
+        })
+        .catch(error => {
+            console.error(error.message);
+            alert(error.message);
         })
     }
 }
@@ -646,7 +837,7 @@ function displayComments(containerId, comments, isEditable) {
         commentElement.innerHTML = `
             <div>
                 <div class="comment-author">${comment.commenter}</div>
-                <div class="comment-date">${new Date(comment.created_date).toLocaleString()}</div>
+                <div class="comment-date">${comment.created_date}</div>
                 <div class="comment-text">${comment.comment}</div>
             </div>
             ${isEditable ? `
@@ -656,6 +847,7 @@ function displayComments(containerId, comments, isEditable) {
             </div>
             ` : ''}
         `;
+        console.log('디스플레이 코멘트', index);
         commentContainer.appendChild(commentElement);
     });
 }
@@ -778,3 +970,24 @@ function loadAssigneeOptions(selectId) {
 }
 
 displayProjects(); // 초기 프로젝트 데이터를 가져옵니다.
+getUserNameFromCookie();
+
+// 쿠키에서 유저 이름 가져오기
+function getUserNameFromCookie() {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.startsWith('JSESSIONID=')) {
+        return cookie.substring('JSESSIONID='.length, cookie.length);
+      }
+    }
+    return null; // 쿠키에 유저 이름이 없는 경우
+  }
+  
+  // 사용 예시
+  const userName = getUserNameFromCookie();
+  if (userName) {
+    console.log(`현재 사용 중인 유저: ${userName}`);
+  } else {
+    console.log('유저 이름을 찾을 수 없습니다.');
+  }

@@ -26,7 +26,7 @@ const projectUserData = [];
 
 let currentProjectId = null;
 let filteredUsers = [];
-let currentEditUser = null;
+let currentEditUser = [];
 const usersPerPage = 20;
 let currentUserPage = 1;
 let totalUserPages = 1;
@@ -50,7 +50,6 @@ function displayUsers(users, page) {
         const row = document.createElement('tr');
         row.innerHTML = `
                     <td>${start + index + 1}</td>
-                    <td>${user.id}</td>
                     <td>${user.nickname}</td>
                     <td>${user.role}</td>
                     <td>
@@ -71,7 +70,16 @@ function filterUsers() {
         filteredUsers = projectUserData;
         console.log(filteredUsers);
     } else {
-        filteredUsers = projectUserData.filter(user => user.role === roleFilter);
+        filteredUsers = projectUserData.filter(user =>{
+             // user.role이 배열인지 확인
+             if (Array.isArray(user.role)) {
+                // 배열의 값 중 하나라도 roleFilter와 일치하면 true 반환
+                return user.role.includes(roleFilter);
+            } else {
+                // user.role이 단일 값인 경우 단순 비교
+                return user.role === roleFilter;
+            }
+        });
     }
     totalUserPages = Math.ceil(filteredUsers.length / usersPerPage);
     displayUsers(filteredUsers, 1);
@@ -179,22 +187,28 @@ function saveEditUser() {
     }
 }
 
-// 유저 삭제 함수
+// 유저 삭제 함수 : 현재 사용 X
 function deleteUser(index) {
+    alert('유저 삭제 기능은 준비중입니다.');
+    /*
     const userId = filteredUsers[index].id;
-    projectUserData[currentProject] = projectUserData[currentProject].filter(user => user.id !== userId);
+    projectUserData = projectUserData.filter(user => user.id !== userId);
     filterUsers();
+    */
 }
 
 // 새로운 유저 추가 모달 열기
 function openAddUserModal() {
+    selectedUsers = [];
+    document.getElementById('usernameInput').value = '';
+    document.getElementById('selected-user-table-body').innerHTML = '';
     document.getElementById('addUserModal').style.display = 'block';
-    displayAllUsers(allUsers, 1);
+    console.log('selectedUSers', selectedUsers);
+    //displayAllUsers(allUsers, 1);
 }
 
 // 새로운 유저 추가 모달 닫기
 function closeAddUserModal() {
-    selectedUsers = [];
     document.getElementById('addUserModal').style.display = 'none';
 }
 
@@ -252,7 +266,6 @@ function displayAllUsers(users, page) {
         const row = document.createElement('tr');
         row.innerHTML = `
                     <td>${start + index + 1}</td>
-                    <td>${user.id}</td>
                     <td>${user.nickname}</td>
                     <td>${user.participated.join(', ')}</td>
                     <td><button class="btn" onclick="addUser(${start + index})">Add</button></td>
@@ -272,15 +285,11 @@ function displaySelectedUsers() {
     selectedUsers.forEach((user, index) => {
         const row = document.createElement('tr');
         row.innerHTML = `
+                    <td><input type="checkbox" class="user-checkbox"></td>
                     <td>${index + 1}</td>
-                    <td>${user.id}</td>
-                    <td>${user.nickname}</td>
+                    <td class="user-nickname">${user.nickname}</td>
                     <td>
-                        <select onchange="updateUserRole(${index}, this.value)">
-                            <option value="PL">PL</option>
-                            <option value="dev">dev</option>
-                            <option value="tester">tester</option>
-                        </select>
+                        PARTICIPANT
                     </td>
                 `;
         selectedUserTableBody.appendChild(row);
@@ -290,10 +299,14 @@ function displaySelectedUsers() {
 // 유저 추가 함수
 function addUser() {
     let nameInput = document.getElementById('usernameInput')
-    if (nameInput) {
+    console.log('nameInput', nameInput);
+    if (nameInput.value) {
         let usernameInput = nameInput.value
-        selectedUsers.push({ nickname: usernameInput, role: 'PARTICIPANT' });
+        selectedUsers.push({ nickname: usernameInput, role: ['PARTICIPANT'] });
         displaySelectedUsers();
+    }
+    else{
+        alert('유저명을 먼저 입력해주세요!');
     }
     /*
     console.log('addUser 테스트중', usernameInput)
@@ -373,6 +386,32 @@ function saveAddedUsers() {
     });
     */
 
+}
+
+function deleteAddedUsers(){
+    const userCheckboxes = document.querySelectorAll('.user-checkbox');
+    const selectedUserTableBody = document.getElementById('selected-user-table-body');
+    const selectedUserRows = selectedUserTableBody.querySelectorAll('tr');
+    console.log('유저테이블바디',selectedUserTableBody);
+
+    // 체크된 사용자의 행을 찾아 삭제하는 로직
+    for (let i = userCheckboxes.length - 1; i >= 0; i--) {
+        const checkbox = userCheckboxes[i];
+        if (checkbox.checked) {
+            const userRow = selectedUserRows[i];
+            const userNickname = userRow.querySelector('.user-nickname').textContent;
+            const userIndex = selectedUsers.findIndex(user => user.nickname === userNickname);
+            
+            console.log('유저 정보', userNickname, userIndex, selectedUsers);
+            if (userIndex !== -1) {
+                // selectedUsers 배열에서 해당 사용자 제거
+                selectedUsers.splice(userIndex, 1);
+                console.log('deleteSelectedUsers', selectedUsers);
+
+                displaySelectedUsers();
+            }
+        }
+    }
 }
 
 // 페이지네이션 업데이트 함수
