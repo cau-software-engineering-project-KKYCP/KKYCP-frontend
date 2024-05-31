@@ -283,7 +283,10 @@ function searchIssues() {
     .then(response =>{
         if (response.status == 200) {
             return response.json();
-        } else if(response.status == 400){
+        } else if(response.status === 403){
+            throw new Error('해당 프로젝트에서 Issue를 검색할 권한이 없는 계정입니다.');
+        }
+        else if(response.status == 400){
             console.log('잘못된 형식의 쿼리입력');
             alert('잘못된 형식의 Title이나 조건을 입력하셨습니다.');
         }
@@ -403,6 +406,8 @@ function saveCreateIssue() {
                 totalPages = Math.ceil(sampleIssues.length / issuesPerPage);
                 displayIssues(sampleIssues, currentPage);
                 closeCreateIssueModal();
+            } else if(response.status === 403){
+                throw new Error('프로젝트에 이슈를 생성할 권한(REPORTER)이 아닌 계정입니다.');
             } else {
                 throw new Error('An error occured while saveCreateIssues');
             }
@@ -419,6 +424,8 @@ function viewIssue(id) {
     .then(response => {
         if (response.status == 200) {
             return response.json(); 
+        } else if(response.status === 403){
+            throw new Error('해당 프로젝트의 이슈를 조회할 권한이 없는 계정입니다.');
         } else{
             throw new Error('An error occured while get detail Issues');
         }
@@ -456,6 +463,8 @@ function editIssue(id) {
     .then(response => {
         if (response.status == 200) {
             return response.json(); 
+        } else if(response.status === 403){
+            throw new Error('해당 이슈를 편집할 수 있는 권한이 없습니다.');
         } else{
             throw new Error('An error occured while get detail Issues');
         }
@@ -558,6 +567,8 @@ function saveEditStatusIssue(){
                     });
                     displayIssues(sampleIssues, currentPage);
                     closeEditModal();
+                } else if(response.status === 403){
+                    throw new Error('해당 상태를 FIXED로 고칠 수 있는 권한이 없습니다.');
                 } else{
                     return response.json().then(errorData => {
                         console.error('Error updating issue:', errorData);
@@ -599,6 +610,8 @@ function saveEditStatusIssue(){
                     });
                     displayIssues(sampleIssues, currentPage);
                     closeEditModal();
+                } else if(response.status === 403){
+                    throw new Error('해당 이슈의 상태를 고칠 권한이 없는 계정입니다.');
                 } else{
                     return response.json().then(errorData => {
                         console.error('Error updating issue:', errorData);
@@ -656,6 +669,8 @@ function saveEditIssue() {
                     });
                     displayIssues(sampleIssues, currentPage);
                     closeEditModal();
+                } else if(response.status === 403){
+                    throw new Error('해당 이슈에 ASSIGNEE를 배정할 수 있는 권한이 없습니다.');
                 } else{
                     return response.json().then(errorData => {
                         console.error('Error updating issue:', errorData);
@@ -699,6 +714,8 @@ function saveEditIssue() {
                     });
                     displayIssues(sampleIssues, currentPage);
                     closeEditModal();
+                } else if(response.status === 403){
+                    throw new Error('해당 이슈를 편집할 수 있는 권한이 없는 계정입니다.');
                 } else{
                     return response.json().then(errorData => {
                         console.error('Error updating issue:', errorData);
@@ -732,6 +749,8 @@ function addComment() {
                 console.log('display 직전', currentViewIssue.comments)
                 displayComments('editComments', currentViewIssue.comments, true);
                 document.getElementById('newComment').value = '';
+            } else if(response.status === 403){
+                throw new Error('해당 이슈에 코멘트를 달 수 없는 계정입니다.');
             } else {
                 throw new Error('Comment cannot saved with Error.');
             }
@@ -777,8 +796,9 @@ function saveEditedComment() {
             document.getElementById('editCommentModal').style.display = 'none';
 
             displayComments('editComments', currentViewIssue.comments, true);
-        }
-        else{
+        } else if(response.status === 403){
+            throw new Error('해당 코멘트를 수정할 수 있는 권한이 없습니다.');
+        } else{
             console.log('코멘트 수정 안됨.');
             alert('코멘트 수정 안됨')
         }
@@ -816,6 +836,8 @@ function deleteComment(index) {
             if(response.status == 200){
                 currentViewIssue.comments.splice(index, 1);
                 displayComments('editComments', currentViewIssue.comments, true);
+            } else if(response.status === 403){
+                throw new Error('해당 코멘트를 삭제할 수 있는 권한이 없습니다.');
             } else if (response.status == 404){
                 alert('해당하는 코멘트가 없습니다.');
             } else{
@@ -904,6 +926,8 @@ function generateStatistics() {
     .then(response =>{
         if (response.status == 200){
             return response.json(); 
+        } else if(response.status === 403){
+            throw new Error('해당 프로젝트의 통계를 볼 수 없는 계정입니다..');
         } else{
             throw new Error('Issues Statistics has error');
         }

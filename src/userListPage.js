@@ -176,6 +176,8 @@ function saveEditUser() {
                     console.log('유저 권한 수정 성공');
                     filterUsers();
                     closeEditUserModal();
+                } else if(response.status === 403){
+                    throw new Error('User 권한 수정이 불가능한 권한을 가진 계정입니다.');
                 } else {
                     throw new Error('User privileges change occur error');
                 }
@@ -363,12 +365,11 @@ function saveAddedUsers() {
                     projectUserData.push(user);
                     closeAddUserModal();
                     filterUsers();
-                }
-                else if (response.status === 404) {
-
+                }else if(response.status === 403){
+                    throw new Error('프로젝트에 유저를 추가할 권한이 없는 계정입니다.');
+                } else if (response.status === 404) {
                     throw new Error('User Added Failed: The project id is not exists or user is not exists.');
-                }
-                else {
+                } else {
                     throw new Error('Unknown Error Occured');
                 }
             })

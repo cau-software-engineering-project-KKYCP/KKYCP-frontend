@@ -164,6 +164,8 @@ function saveCreateProject() {
             // 프로젝트 생성 성공
             if (response.status == 201) {
                 return response.json(); 
+            } else if(response.status === 403){
+                throw new Error('프로젝트 생성 권한이 없는 계정입니다.');
             } else if (response.status === 409) {
                 throw new Error('Project creation failed: The project name already exists.');
             } else {
