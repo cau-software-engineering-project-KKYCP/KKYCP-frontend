@@ -238,7 +238,6 @@ function displayIssues(issues, page) {
                 <td>
                     <button class="btn" onclick="viewIssue(${issue.id})">View</button>
                     <button class="btn" onclick="editIssue(${issue.id})">Edit</button>
-                    <button class="btn" onclick="deleteIssue(${issue.id})">Del</button>
                 </td>
             `;
             issueTableBody.appendChild(row);
@@ -414,7 +413,7 @@ function saveCreateIssue() {
 // 이슈를 조회하는 함수
 function viewIssue(id) {
     console.log('viewIssues id', id);
-    fetch(`api/project/${currentProject}/issues/${id}`,{
+    fetch(`/api/project/${currentProject}/issues/${id}`,{
         method:'GET'
     })
     .then(response => {
@@ -552,7 +551,7 @@ function saveEditStatusIssue(){
                             return {
                                 ...issue,
                                 fixer: currentEditIssue.assignee,
-                                status: currentEditIssue.status
+                                status: 'FIXED'
                             };
                         }
                         return issue;
@@ -593,7 +592,6 @@ function saveEditStatusIssue(){
                         if (issue.id === currentEditIssue.id) {
                             return {
                                 ...issue,
-                                assignee: currentEditIssue.assignee,
                                 status: currentEditIssue.status
                             };
                         }
@@ -626,7 +624,7 @@ function saveEditIssue() {
         currentEditIssue.status = document.getElementById('editStatus').value;
         currentEditIssue.type = document.getElementById('editType').value;
         console.log('saveEditISsue : currnetEditIssue', currentEditIssue);
-        if(currentEditIssue.assignee != null && currentEditIssue.status == 'NEW'){  
+        if(currentEditIssue.assignee.length != 0 && currentEditIssue.status == 'NEW'){  
             fetch(`api/project/${currentProject}/issues/${currentEditIssue.id}`,{
                 method:'PATCH',
                 headers:{
@@ -692,8 +690,9 @@ function saveEditIssue() {
                         if (issue.id === currentEditIssue.id) {
                             return {
                                 ...issue,
-                                assignee: currentEditIssue.assignee,
-                                status: currentEditIssue.status
+                                title: currentEditIssue.title,
+                                priority: currentEditIssue.priority,
+                                type : currentEditIssue.type
                             };
                         }
                         return issue;
@@ -885,7 +884,6 @@ function displayProjectUsers() {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${index + 1}</td>
-            <td>${user.id}</td>
             <td>${user.nickname}</td>
             <td>${user.role}</td>
         `;

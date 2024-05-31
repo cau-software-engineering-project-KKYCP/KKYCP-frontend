@@ -52,8 +52,6 @@ function displayProjects(projects, page) {
             <td>${project.name}</td>
             <td>
                 <button class="btn" onclick="viewProject(${start + index})">View</button>
-                <button class="btn" onclick="editProject(${start + index})">Edit</button>
-                <button class="btn" onclick="deleteProject(${start + index})">Del</button>
                 <span class="divider"></span>
                 <button class="btn" onclick="viewUserList(${start + index})">UserList</button>
             </td>
@@ -115,7 +113,7 @@ function closeEditProjectModal() {
     document.getElementById('editProjectModal').style.display = 'none';
 }
 
-// 프로젝트 편집 내용을 저장하는 함수
+// 프로젝트 편집 내용을 저장하는 함수 : 사용 X
 function saveEditProject() {
     const newName = document.getElementById('editProjectName').value;
     if (currentEditProjectIndex !== null && newName && newDescription) {
@@ -126,7 +124,7 @@ function saveEditProject() {
     }
 }
 
-// 프로젝트를 삭제하는 함수
+// 프로젝트를 삭제하는 함수 : 사용 X
 function deleteProject(index) {
     sampleProjects.splice(index, 1);
     // 삭제된 프로젝트를 백엔드에 반영하는 로직이 추가되어야 합니다.

@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (response.ok) {
                 // 회원가입 성공 시 로그인 페이지로 이동
                 console.log("response 201");
+                alert("회원가입 성공");
                 window.location.href = 'login.html';
             } else {
                 return response.text().then(text => { throw new Error(text); });

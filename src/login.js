@@ -25,7 +25,11 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(response => {
                 if (response.ok) {
                     console.log("로그인 성공: 200");
+                    alert("로그인 성공");
                     window.location.href = 'startPage.html';
+                }
+                else if (response.status == 401){
+                    alert("로그인에 실패했습니다.")
                 }
                 else{
                     return response.text().then(text => { throw new Error(text); });
